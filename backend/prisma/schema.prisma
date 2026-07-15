@@ -1,0 +1,370 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  CUSTOMER
+  STAFF
+}
+
+model Customer {
+  id        String   @id @default(uuid()) @db.Uuid
+  phone     String   @unique() @db.VarChar(20)
+  name      String?  @db.VarChar(100)
+  email     String?  @db.VarChar(100)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@map("customers")
+}
+
+model Staff {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique() @db.VarChar(100)
+  password  String   @db.VarChar(255)
+  name      String   @db.VarChar(100)
+  isActive  Boolean  @default(true) @map("is_active")
+  roleId    String   @map("role_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@map("staff")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique() @db.VarChar(50)
+  description String?  @db.VarChar(255)
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  permissions RolePermission[]
+  staff       Staff[]
+
+  @@map("roles")
+}
+
+model Resource {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @unique() @db.VarChar(100)
+  description String? @db.VarChar(255)
+
+  permissions RolePermission[]
+
+  @@map("resources")
+}
+
+model RolePermission {
+  id         String @id @default(uuid()) @db.Uuid
+  roleId     String @map("role_id") @db.Uuid
+  resourceId String @map("resource_id") @db.Uuid
+  canRead    Boolean @default(false) @map("can_read")
+  canWrite   Boolean @default(false) @map("can_write")
+  canDelete  Boolean @default(false) @map("can_delete")
+
+  role     Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, resourceId])
+  @@map("role_permissions")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique() @map("token_hash") @db.VarChar(255)
+  familyId  String   @map("family_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  userType  UserType @map("user_type")
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, userType])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+model OtpCode {
+  id        String   @id @default(uuid()) @db.Uuid
+  phone     String   @db.VarChar(20)
+  code      String   @db.VarChar(6)
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, code])
+  @@map("otp_codes")
+}
+
+model Order {
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@map("orders")
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  titleEn   String   @map("title_en") @db.VarChar(200)
+  titleAm   String   @map("title_am") @db.VarChar(200)
+  image     String?  @db.VarChar(500)
+  syncedAt  DateTime @default(now()) @map("synced_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  productGroups ProductGroup[]
+  items         Item[]
+
+  @@index([titleEn])
+  @@index([titleAm])
+  @@map("categories")
+}
+
+model ProductGroup {
+  id            String   @id @default(uuid()) @db.Uuid
+  titleEn       String   @map("title_en") @db.VarChar(200)
+  titleAm       String   @map("title_am") @db.VarChar(200)
+  categoryId    String   @map("category_id") @db.Uuid
+  image         String?  @db.VarChar(500)
+  featured      Boolean  @default(false)
+  featuredImage String?  @map("featured_image") @db.VarChar(500)
+  syncedAt      DateTime @default(now()) @map("synced_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  category Category @relation(fields: [categoryId], references: [id])
+  brands   Brand[]
+  items    Item[]
+
+  @@index([categoryId])
+  @@index([titleEn])
+  @@index([titleAm])
+  @@map("product_groups")
+}
+
+model Brand {
+  id             String   @id @default(uuid()) @db.Uuid
+  titleEn        String   @map("title_en") @db.VarChar(200)
+  titleAm        String   @map("title_am") @db.VarChar(200)
+  productGroupId String   @map("product_group_id") @db.Uuid
+  image          String?  @db.VarChar(500)
+  featured       Boolean  @default(false)
+  syncedAt       DateTime @default(now()) @map("synced_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  productGroup ProductGroup @relation(fields: [productGroupId], references: [id])
+  items        Item[]
+
+  @@index([productGroupId])
+  @@index([titleEn])
+  @@index([titleAm])
+  @@map("brands")
+}
+
+model Item {
+  navItemNo        String   @id @map("nav_item_no") @db.VarChar(50)
+  titleEn          String   @map("title_en") @db.VarChar(200)
+  titleAm          String   @map("title_am") @db.VarChar(200)
+  categoryId       String   @map("category_id") @db.Uuid
+  productGroupId   String   @map("product_group_id") @db.Uuid
+  brandId          String   @map("brand_id") @db.Uuid
+  image            String?  @db.VarChar(500)
+  specificationsEn String?  @map("specifications_en") @db.Text
+  specificationsAm String?  @map("specifications_am") @db.Text
+  uom              String?  @db.VarChar(20)
+  status           Int      @default(1)
+  syncedAt         DateTime @default(now()) @map("synced_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  category      Category      @relation(fields: [categoryId], references: [id])
+  productGroup  ProductGroup  @relation(fields: [productGroupId], references: [id])
+  brand         Brand         @relation(fields: [brandId], references: [id])
+  prices        ItemPrice[]
+  stockSnapshots ItemStockSnapshot[]
+  comboHeaders   ComboHeader[]
+  comboLines     ComboLine[]
+  topItems       TopItem[]
+
+  @@index([categoryId])
+  @@index([productGroupId])
+  @@index([brandId])
+  @@index([titleEn])
+  @@index([titleAm])
+  @@map("items")
+}
+
+model ItemPrice {
+  id          String    @id @default(uuid()) @db.Uuid
+  navItemNo   String    @map("nav_item_no") @db.VarChar(50)
+  branchId    String    @map("branch_id") @db.VarChar(50)
+  uom         String?   @db.VarChar(20)
+  price       Decimal   @db.Decimal(12, 2)
+  discountPct Decimal?  @map("discount_pct") @db.Decimal(5, 2)
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  customerNo  String?   @map("customer_no") @db.VarChar(50)
+  syncedAt    DateTime  @default(now()) @map("synced_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  item Item @relation(fields: [navItemNo], references: [navItemNo])
+
+  @@unique([navItemNo, branchId])
+  @@index([navItemNo])
+  @@index([branchId])
+  @@map("item_prices")
+}
+
+model ItemStockSnapshot {
+  id        String   @id @default(uuid()) @db.Uuid
+  navItemNo String   @map("nav_item_no") @db.VarChar(50)
+  branchId  String   @map("branch_id") @db.VarChar(50)
+  qty       Int      @default(0)
+  syncedAt  DateTime @default(now()) @map("synced_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  item Item @relation(fields: [navItemNo], references: [navItemNo])
+
+  @@unique([navItemNo, branchId])
+  @@index([navItemNo])
+  @@index([branchId])
+  @@map("item_stock_snapshots")
+}
+
+model NavSyncLog {
+  id           Int       @id @default(autoincrement())
+  startedAt    DateTime  @map("started_at")
+  finishedAt   DateTime? @map("finished_at")
+  rowsSynced   Int?      @map("rows_synced")
+  status       String    @db.VarChar(20)
+  errorMessage String?   @map("error_message") @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([status])
+  @@index([startedAt])
+  @@map("nav_sync_logs")
+}
+
+model ComboHeader {
+  id          String   @id @default(uuid()) @db.Uuid
+  navItemNo   String   @map("nav_item_no") @db.VarChar(50)
+  description String?  @db.VarChar(500)
+  price       Decimal  @db.Decimal(12, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  item  Item        @relation(fields: [navItemNo], references: [navItemNo])
+  lines ComboLine[]
+
+  @@index([navItemNo])
+  @@map("combo_headers")
+}
+
+model ComboLine {
+  id             String  @id @default(uuid()) @db.Uuid
+  headerId       String  @map("header_id") @db.Uuid
+  navItemNo      String  @map("nav_item_no") @db.VarChar(50)
+  itemDescription String? @map("item_description") @db.VarChar(500)
+  quantity       Decimal @db.Decimal(12, 2)
+  salesUom       String? @map("sales_uom") @db.VarChar(20)
+
+  header ComboHeader @relation(fields: [headerId], references: [id], onDelete: Cascade)
+  item   Item        @relation(fields: [navItemNo], references: [navItemNo])
+
+  @@index([headerId])
+  @@index([navItemNo])
+  @@map("combo_lines")
+}
+
+model TopItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  navItemNo String   @map("nav_item_no") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  item Item @relation(fields: [navItemNo], references: [navItemNo])
+
+  @@unique([navItemNo])
+  @@index([navItemNo])
+  @@map("top_items")
+}
+
+model LandMark {
+  code      String  @id @db.VarChar(50)
+  titleEn   String  @map("title_en") @db.VarChar(200)
+  titleAm   String  @map("title_am") @db.VarChar(200)
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  landMarkPrices LandMarkPrice[]
+
+  @@map("land_marks")
+}
+
+model Shop {
+  locationCode String  @id @map("location_code") @db.VarChar(50)
+  titleEn      String  @map("title_en") @db.VarChar(200)
+  titleAm      String  @map("title_am") @db.VarChar(200)
+  latitude     Decimal? @db.Decimal(10, 7)
+  longitude    Decimal? @db.Decimal(10, 7)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  landMarkPrices LandMarkPrice[]
+
+  @@map("shops")
+}
+
+model DeliveryDate {
+  id      String @id @default(uuid()) @db.Uuid
+  titleEn String @map("title_en") @db.VarChar(200)
+  titleAm String @map("title_am") @db.VarChar(200)
+
+  landMarkPrices LandMarkPrice[]
+
+  @@map("delivery_dates")
+}
+
+model TimeRange {
+  id        String @id @default(uuid()) @db.Uuid
+  timeRange String @map("time_range") @db.VarChar(50)
+
+  @@map("time_ranges")
+}
+
+model LandMarkPrice {
+  id          String   @id @default(uuid()) @db.Uuid
+  dateId      String   @map("date_id") @db.Uuid
+  timeRange   String   @map("time_range") @db.VarChar(50)
+  landMarkCode String  @map("land_mark_code") @db.VarChar(50)
+  shopCode    String   @map("shop_code") @db.VarChar(50)
+  price       Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  date      DeliveryDate @relation(fields: [dateId], references: [id])
+  landMark  LandMark     @relation(fields: [landMarkCode], references: [code])
+  shop      Shop         @relation(fields: [shopCode], references: [locationCode])
+
+  @@index([dateId])
+  @@index([landMarkCode])
+  @@index([shopCode])
+  @@map("land_mark_prices")
+}
