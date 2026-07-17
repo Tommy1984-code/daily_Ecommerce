@@ -10,6 +10,7 @@ import {
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
 import { Modal } from "../../components/ui/modal";
+import { Pagination } from "../../components/ui/Pagination";
 import { useAuth } from "../../context/AuthContext";
 import {
   getCombos,
@@ -25,6 +26,7 @@ export default function Combos() {
   const [items, setItems] = useState<ComboHeader[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [meta, setMeta] = useState<{
     total: number;
     totalPages: number;
@@ -40,7 +42,7 @@ export default function Combos() {
   async function fetch(pageNum = 1) {
     setLoading(true);
     try {
-      const res = await getCombos(pageNum, 20);
+      const res = await getCombos(pageNum, limit);
       setItems(res.data);
       setMeta(res.meta);
       setPage(pageNum);
@@ -166,13 +168,14 @@ export default function Combos() {
       </div>
 
       {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500">Page {page} of {meta.totalPages} ({meta.total} total)</p>
-          <div className="flex gap-2">
-            <button disabled={!meta.hasPreviousPage} onClick={() => fetch(page - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40">Previous</button>
-            <button disabled={!meta.hasNextPage} onClick={() => fetch(page + 1)} className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40">Next</button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={meta?.totalPages || 0}
+          totalItems={meta?.total || 0}
+          onPageChange={fetch}
+          limit={limit}
+          onLimitChange={(l: number) => { setLimit(l); setPage(1); }}
+        />
       )}
 
       <Modal

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import {
   Table,
@@ -8,9 +8,14 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
-import Input from "../../components/form/input/InputField";
 import { useAuth } from "../../context/AuthContext";
-import { getAllGroups, type ProductGroup } from "../../services/productService";
+import {
+  getAllGroups,
+  updateProductGroupImage,
+  deleteProductGroup,
+  type ProductGroup,
+} from "../../services/productService";
+import { Pagination } from "../../components/ui/Pagination";
 
 export default function Groups() {
   const { isAdmin } = useAuth();
@@ -19,13 +24,19 @@ export default function Groups() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit, setLimit] = useState(10);
   const [meta, setMeta] = useState<{
     total: number;
     totalPages: number;
     hasNextPage: boolean;
     hasPreviousPage: boolean;
   } | null>(null);
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ProductGroup | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
+  const [saving, setSaving] = useState(false);
 
   async function fetch(pageNum = 1) {
     setLoading(true);
@@ -53,6 +64,41 @@ export default function Groups() {
     if (e.key === "Enter") fetch(1);
   }
 
+  function openEditModal(group: ProductGroup) {
+    setEditingItem(group);
+    setImageUrl(group.image || "");
+    setModalOpen(true);
+  }
+
+  async function handleSave() {
+    if (!editingItem) return;
+    setSaving(true);
+    try {
+      await updateProductGroupImage(editingItem.id, imageUrl);
+      setItems((prev) =>
+        prev.map((g) => (g.id === editingItem.id ? { ...g, image: imageUrl } : g))
+      );
+      setModalOpen(false);
+      setEditingItem(null);
+    } catch (err) {
+      console.error("Failed to update image", err);
+      alert("Failed to update image");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(group: ProductGroup) {
+    if (!confirm(`Are you sure you want to delete "${group.titleEn} / ${group.titleAm}"?`)) return;
+    try {
+      await deleteProductGroup(group.id);
+      setItems((prev) => prev.filter((g) => g.id !== group.id));
+    } catch (err) {
+      console.error("Failed to delete product group", err);
+      alert("Failed to delete product group");
+    }
+  }
+
   return (
     <>
       <PageMeta title="Category 2 | Dashboard" description="Product groups" />
@@ -69,11 +115,13 @@ export default function Groups() {
       </div>
 
       <div className="mb-4 max-w-xs">
-        <Input
+        <input
+          type="text"
           placeholder="Search product groups..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={handleSearchKeyDown}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
       </div>
 
@@ -137,12 +185,26 @@ export default function Groups() {
                       )}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start">
-                      <Link
-                        to={`/product/groups/${g.id}/brands`}
-                        className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors"
-                      >
-                        View Brands
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openEditModal(g)}
+                          className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 transition-colors"
+                          title="Edit Image"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(g)}
+                          className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 transition-colors"
+                          title="Delete"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -152,37 +214,86 @@ export default function Groups() {
         </div>
       </div>
 
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>Records per page:</span>
-            <select
-              value={limit}
-              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
-              className="border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 text-sm bg-white dark:bg-gray-800"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span>Page {page} of {meta.totalPages} ({meta.total} total)</span>
-          </div>
-          <div className="flex gap-2">
-            <button
-              disabled={!meta.hasPreviousPage}
-              onClick={() => fetch(page - 1)}
-              className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              Previous
-            </button>
-            <button
-              disabled={!meta.hasNextPage}
-              onClick={() => fetch(page + 1)}
-              className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              Next
-            </button>
+      <Pagination
+        currentPage={page}
+        totalPages={meta?.totalPages || 0}
+        totalItems={meta?.total || 0}
+        onPageChange={fetch}
+        onLimitChange={(l: number) => { setLimit(l); setPage(1); }}
+        limit={limit}
+        limits={[10, 20, 50, 100]}
+      />
+
+      {/* Edit Image Modal */}
+      {modalOpen && editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-md rounded-xl bg-white dark:bg-gray-800 shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+                Edit Product Group Image
+              </h2>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-4">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Category 1
+                </label>
+                <p className="text-gray-800 dark:text-white">
+                  {editingItem.categoryTitleEn} / {editingItem.categoryTitleAm}
+                </p>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Category 2 Title
+                </label>
+                <p className="text-gray-800 dark:text-white">
+                  {editingItem.titleEn} / {editingItem.titleAm}
+                </p>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Image URL
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://example.com/image.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+              {editingItem.image && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Current Image Preview
+                  </label>
+                  <img src={editingItem.image} alt={editingItem.titleEn} className="w-32 h-20 object-cover rounded border" />
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="px-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-4 py-2 text-sm rounded-lg bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
           </div>
         </div>
       )}

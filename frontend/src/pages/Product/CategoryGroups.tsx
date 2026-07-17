@@ -14,6 +14,7 @@ import {
   getCategoryGroups,
   type ProductGroup,
 } from "../../services/productService";
+import { Pagination } from "../../components/ui/Pagination";
 
 export default function CategoryGroups() {
   const { isAdmin } = useAuth();
@@ -23,6 +24,7 @@ export default function CategoryGroups() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [meta, setMeta] = useState<{
     total: number;
     totalPages: number;
@@ -34,7 +36,7 @@ export default function CategoryGroups() {
     if (!categoryId) return;
     setLoading(true);
     try {
-      const res = await getCategoryGroups(categoryId, pageNum, 20, search || undefined);
+      const res = await getCategoryGroups(categoryId, pageNum, limit, search || undefined);
       setItems(res.data);
       setMeta(res.meta);
       setPage(pageNum);
@@ -155,27 +157,14 @@ export default function CategoryGroups() {
       </div>
 
       {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500">
-            Page {page} of {meta.totalPages} ({meta.total} total)
-          </p>
-          <div className="flex gap-2">
-            <button
-              disabled={!meta.hasPreviousPage}
-              onClick={() => fetch(page - 1)}
-              className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              disabled={!meta.hasNextPage}
-              onClick={() => fetch(page + 1)}
-              className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={meta.totalPages}
+          totalItems={meta.total}
+          onPageChange={fetch}
+          limit={limit}
+          onLimitChange={(l) => { setLimit(l); setPage(1); }}
+        />
       )}
     </>
   );

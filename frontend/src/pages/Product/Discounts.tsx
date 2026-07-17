@@ -11,6 +11,7 @@ import {
 import Input from "../../components/form/input/InputField";
 import { useAuth } from "../../context/AuthContext";
 import { getDiscounts, type DiscountRecord } from "../../services/productService";
+import { Pagination } from "../../components/ui/Pagination";
 
 export default function Discounts() {
   const { isAdmin } = useAuth();
@@ -19,6 +20,7 @@ export default function Discounts() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [meta, setMeta] = useState<{
     total: number;
     totalPages: number;
@@ -29,8 +31,13 @@ export default function Discounts() {
   async function fetch(pageNum = 1) {
     setLoading(true);
     try {
-      const res = await getDiscounts(pageNum, 20, search || undefined);
-      setItems(res.data);
+      const res = await getDiscounts(pageNum, 20);
+      const filtered = search
+        ? res.data.filter((r) =>
+            r.titleEn.toLowerCase().includes(search.toLowerCase())
+          )
+        : res.data;
+      setItems(filtered);
       setMeta(res.meta);
       setPage(pageNum);
     } catch (err) {
@@ -82,38 +89,36 @@ export default function Discounts() {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Item Title</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Branch</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">UOM</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Price</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">NAV No</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Discount %</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Start Date</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">End Date</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Created</TableCell>
               </TableRow>
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (
                 <TableRow>
-                  <td colSpan={7} className="px-5 py-8 text-center text-gray-500">Loading discounts...</td>
+                  <td colSpan={4} className="px-5 py-8 text-center text-gray-500">Loading discounts...</td>
                 </TableRow>
               ) : items.length === 0 ? (
                 <TableRow>
-                  <td colSpan={7} className="px-5 py-8 text-center text-gray-500">No discounts found</td>
+                  <td colSpan={4} className="px-5 py-8 text-center text-gray-500">No discounts found</td>
                 </TableRow>
               ) : (
-                items.map((item) => (
-                  <TableRow key={item.id}>
+                items.map((d) => (
+                  <TableRow key={d.id}>
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
-                      <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">{item.titleEn}</span>
+                      <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">{d.titleEn}</span>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.branchId}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.uom || "—"}</TableCell>
-                    <TableCell className="px-4 py-3 text-start text-theme-sm font-medium text-gray-800 dark:text-white/90">ETB {item.price.toFixed(2)}</TableCell>
                     <TableCell className="px-4 py-3 text-start">
-                      <span className="text-error-500 font-semibold">{item.discountPct}%</span>
+                      <code className="text-xs font-mono text-gray-500">{d.navItemNo}</code>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.startDate ? new Date(item.startDate).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.endDate ? new Date(item.endDate).toLocaleDateString() : "—"}</TableCell>
+                    <TableCell className="px-4 py-3 text-start">
+                      <span className="text-error-500 font-semibold">{d.discountPct}%</span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      {new Date(d.createdAt).toLocaleDateString()}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -123,13 +128,15 @@ export default function Discounts() {
       </div>
 
       {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500">Page {page} of {meta.totalPages} ({meta.total} total)</p>
-          <div className="flex gap-2">
-            <button disabled={!meta.hasPreviousPage} onClick={() => fetch(page - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40">Previous</button>
-            <button disabled={!meta.hasNextPage} onClick={() => fetch(page + 1)} className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40">Next</button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={meta.totalPages}
+          totalItems={meta.total}
+          onPageChange={fetch}
+          onLimitChange={(l) => { setLimit(l); setPage(1); }}
+          limit={limit}
+          limits={[10, 20, 50, 100]}
+        />
       )}
     </>
   );

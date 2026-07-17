@@ -11,6 +11,7 @@ import {
 import Input from "../../components/form/input/InputField";
 import { useAuth } from "../../context/AuthContext";
 import { getGroupBrands, type Brand } from "../../services/productService";
+import { Pagination } from "../../components/ui/Pagination";
 
 export default function GroupBrands() {
   const { isAdmin } = useAuth();
@@ -20,6 +21,7 @@ export default function GroupBrands() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [meta, setMeta] = useState<{
     total: number;
     totalPages: number;
@@ -161,27 +163,14 @@ export default function GroupBrands() {
       </div>
 
       {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500">
-            Page {page} of {meta.totalPages} ({meta.total} total)
-          </p>
-          <div className="flex gap-2">
-            <button
-              disabled={!meta.hasPreviousPage}
-              onClick={() => fetch(page - 1)}
-              className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              disabled={!meta.hasNextPage}
-              onClick={() => fetch(page + 1)}
-              className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={meta.totalPages}
+          totalItems={meta.total}
+          onPageChange={fetch}
+          limit={limit}
+          onLimitChange={(l: number) => { setLimit(l); setPage(1); }}
+        />
       )}
     </>
   );

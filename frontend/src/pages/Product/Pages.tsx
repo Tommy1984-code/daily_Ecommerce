@@ -10,6 +10,7 @@ import {
 } from "../../components/ui/table";
 import Input from "../../components/form/input/InputField";
 import { useAuth } from "../../context/AuthContext";
+import { Pagination } from "../../components/ui/Pagination";
 import { getPrices, type ItemPriceRecord } from "../../services/productService";
 
 export default function Prices() {
@@ -19,6 +20,7 @@ export default function Prices() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [meta, setMeta] = useState<{
     total: number;
     totalPages: number;
@@ -29,7 +31,7 @@ export default function Prices() {
   async function fetch(pageNum = 1) {
     setLoading(true);
     try {
-      const res = await getPrices(pageNum, 20, search || undefined);
+      const res = await getPrices(pageNum, limit, search || undefined);
       setItems(res.data);
       setMeta(res.meta);
       setPage(pageNum);
@@ -41,16 +43,19 @@ export default function Prices() {
   }
 
   useEffect(() => {
-    if (!isAdmin) {
-      navigate("/", { replace: true });
-      return;
-    }
+    if (!isAdmin) { navigate("/", { replace: true }); return; }
     fetch();
   }, [isAdmin, navigate]);
 
   function handleSearchKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter") fetch(1);
   }
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    return d.toISOString().split("T")[0];
+  };
 
   return (
     <>
@@ -81,13 +86,13 @@ export default function Prices() {
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">No</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Item Title</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Branch</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">UOM</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Price</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Discount %</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Start Date</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">End Date</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Actions</TableCell>
               </TableRow>
             </TableHeader>
 
@@ -101,23 +106,38 @@ export default function Prices() {
                   <td colSpan={7} className="px-5 py-8 text-center text-gray-500">No prices found</td>
                 </TableRow>
               ) : (
-                items.map((item) => (
+                items.map((item, idx) => (
                   <TableRow key={item.id}>
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
-                      <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">{item.titleEn}</span>
+                      <span className="font-mono text-xs text-gray-500">
+                        {(page - 1) * limit + idx + 1}
+                      </span>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.branchId}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.uom || "—"}</TableCell>
-                    <TableCell className="px-4 py-3 text-start text-theme-sm font-medium text-gray-800 dark:text-white/90">ETB {item.price.toFixed(2)}</TableCell>
+                    <TableCell className="px-5 py-4 sm:px-6 text-start">
+                      <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                        {item.titleEn} / {item.titleAm}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      {item.uom || "—"}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-start text-theme-sm font-medium text-gray-800 dark:text-white/90">
+                      ETB {item.price.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      {formatDate(item.startDate)}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      {formatDate(item.endDate)}
+                    </TableCell>
                     <TableCell className="px-4 py-3 text-start">
-                      {item.discountPct ? (
-                        <span className="text-error-500 font-medium">{item.discountPct}%</span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
+                      <span className="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Placeholder
+                      </span>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.startDate ? new Date(item.startDate).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.endDate ? new Date(item.endDate).toLocaleDateString() : "—"}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -126,14 +146,15 @@ export default function Prices() {
         </div>
       </div>
 
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500">Page {page} of {meta.totalPages} ({meta.total} total)</p>
-          <div className="flex gap-2">
-            <button disabled={!meta.hasPreviousPage} onClick={() => fetch(page - 1)} className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40">Previous</button>
-            <button disabled={!meta.hasNextPage} onClick={() => fetch(page + 1)} className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40">Next</button>
-          </div>
-        </div>
+      {meta && (
+        <Pagination
+          currentPage={page}
+          totalPages={meta.totalPages}
+          totalItems={meta.total}
+          onPageChange={fetch}
+          limit={limit}
+          onLimitChange={(l) => { setLimit(l); fetch(1); }}
+        />
       )}
     </>
   );

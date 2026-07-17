@@ -14,6 +14,7 @@ export interface PaginatedResponse<T> {
 
 export interface Category {
   id: string;
+  code: string;
   titleEn: string;
   titleAm: string;
   image: string | null;
@@ -23,6 +24,7 @@ export interface Category {
 
 export interface ProductGroup {
   id: string;
+  code: string;
   titleEn: string;
   titleAm: string;
   categoryId: string;
@@ -35,6 +37,7 @@ export interface ProductGroup {
 
 export interface Brand {
   id: string;
+  code: string;
   titleEn: string;
   titleAm: string;
   productGroupId: string;
@@ -48,10 +51,10 @@ export interface Brand {
 }
 
 export interface ItemPrice {
+  priceId: string | null;
   branchId: string;
   uom: string | null;
   price: number;
-  discountPct: number | null;
   startDate: string | null;
   endDate: string | null;
   customerNo: string | null;
@@ -160,12 +163,13 @@ export async function getItemByNavNo(navItemNo: string): Promise<Item> {
 // Price
 export interface ItemPriceRecord {
   id: string;
+  priceId: string | null;
   navItemNo: string;
   titleEn: string;
+  titleAm: string;
   branchId: string;
   uom: string | null;
   price: number;
-  discountPct: number | null;
   startDate: string | null;
   endDate: string | null;
   customerNo: string | null;
@@ -183,17 +187,12 @@ export interface DiscountRecord {
   id: string;
   navItemNo: string;
   titleEn: string;
-  branchId: string;
-  uom: string | null;
   discountPct: number;
-  price: number;
-  startDate: string | null;
-  endDate: string | null;
+  createdAt: string;
 }
 
-export async function getDiscounts(page = 1, limit = 20, q?: string): Promise<PaginatedResponse<DiscountRecord>> {
+export async function getDiscounts(page = 1, limit = 20): Promise<PaginatedResponse<DiscountRecord>> {
   const params: Record<string, string | number> = { page, limit };
-  if (q) params.q = q;
   const res = await api.get("/v1/product/discounts", { params });
   return res.data;
 }
@@ -342,19 +341,54 @@ export async function deleteLandMarkPrice(id: string): Promise<void> {
   await api.delete(`/v1/product/land-mark-prices/${id}`);
 }
 
+// Image update functions
+export async function updateCategoryImage(id: string, image: string): Promise<Category> {
+  const res = await api.patch(`/v1/product/categories/${id}/image`, { image });
+  return res.data;
+}
+
+export async function updateProductGroupImage(id: string, image: string): Promise<ProductGroup> {
+  const res = await api.patch(`/v1/product/groups/${id}/image`, { image });
+  return res.data;
+}
+
+export async function updateBrandImage(id: string, image: string): Promise<Brand> {
+  const res = await api.patch(`/v1/product/brands/${id}/image`, { image });
+  return res.data;
+}
+
+// Delete functions
+export async function deleteCategory(id: string): Promise<void> {
+  await api.delete(`/v1/product/categories/${id}`);
+}
+
+export async function deleteProductGroup(id: string): Promise<void> {
+  await api.delete(`/v1/product/groups/${id}`);
+}
+
+export async function deleteBrand(id: string): Promise<void> {
+  await api.delete(`/v1/product/brands/${id}`);
+}
+
 // Featured Categories
 export interface FeaturedCategory {
   id: string;
+  code: string;
   titleEn: string;
   titleAm: string;
   image: string | null;
   featuredImage: string | null;
   brandCount: number;
-  brands: { id: string; titleEn: string; featured: boolean }[];
+  brands: { id: string; code: string; titleEn: string; titleAm: string; featured: boolean }[];
 }
 
-export async function getFeaturedCategories(): Promise<FeaturedCategory[]> {
-  const res = await api.get("/v1/product/featured-categories");
+export async function getFeaturedCategories(page = 1, limit = 10, q?: string): Promise<PaginatedResponse<FeaturedCategory>> {
+  const res = await api.get("/v1/product/featured-categories", { params: { page, limit, q } });
+  return res.data;
+}
+
+export async function createFeaturedCategory(data: { productGroupId: string; featuredImage?: string; brandIds: string[] }): Promise<FeaturedCategory> {
+  const res = await api.post("/v1/product/featured-categories", data);
   return res.data;
 }
 
@@ -368,4 +402,16 @@ export async function toggleFeaturedBrand(productGroupId: string, brandId: strin
 
 export async function toggleFeaturedCategory(id: string): Promise<void> {
   await api.patch(`/v1/product/featured-categories/${id}/toggle`, {});
+}
+
+export async function updateItem(
+  navItemNo: string,
+  data: { image?: string; specificationsEn?: string; specificationsAm?: string },
+): Promise<Item> {
+  const res = await api.patch(`/v1/product/items/${navItemNo}`, data);
+  return res.data;
+}
+
+export async function deleteItem(navItemNo: string): Promise<void> {
+  await api.delete(`/v1/product/items/${navItemNo}`);
 }

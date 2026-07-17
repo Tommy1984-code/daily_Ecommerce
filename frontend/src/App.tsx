@@ -29,6 +29,7 @@ import TopItems from "./pages/Product/TopItems";
 import LandMarkPrices from "./pages/Product/LandMarkPrices";
 import LandMarkPriceCreate from "./pages/Product/LandMarkPriceCreate";
 import FeaturedCategories from "./pages/Product/FeaturedCategories";
+import FeaturedCategoriesAdd from "./pages/Product/FeaturedCategoriesAdd";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
@@ -78,6 +79,7 @@ export default function App() {
               <Route path="/product/land-mark-prices" element={<LandMarkPrices />} />
               <Route path="/product/land-mark-prices/new" element={<LandMarkPriceCreate />} />
               <Route path="/product/featured-categories" element={<FeaturedCategories />} />
+              <Route path="/product/featured-categories/new" element={<FeaturedCategoriesAdd />} />
             </Route>
           </Route>
 
