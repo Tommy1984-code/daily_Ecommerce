@@ -28,7 +28,7 @@ export class PriceService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: { item: { select: { titleEn: true } } },
+        include: { item: { select: { titleEn: true, titleAm: true } } },
       }),
       this.prisma.itemPrice.count({ where }),
     ]);
@@ -36,12 +36,13 @@ export class PriceService {
     return paginate(
       data.map((p) => ({
         id: p.id,
-        navItemNo: p.navItemNo,
+        priceId: p.priceId,
+        itemId: p.itemId,
         titleEn: p.item.titleEn,
+        titleAm: p.item.titleAm,
         branchId: p.branchId,
         uom: p.uom,
         price: Number(p.price),
-        discountPct: p.discountPct ? Number(p.discountPct) : null,
         startDate: p.startDate?.toISOString() ?? null,
         endDate: p.endDate?.toISOString() ?? null,
         customerNo: p.customerNo,
@@ -53,19 +54,20 @@ export class PriceService {
   }
 
   async findOne(id: string): Promise<PriceResponseDto> {
-    const price = await this.prisma.itemPrice.findUnique({
+const price = await this.prisma.itemPrice.findUnique({
       where: { id },
-      include: { item: { select: { titleEn: true } } },
+      include: { item: { select: { titleEn: true, titleAm: true } } },
     });
     if (!price) throw ApiError.NotFound('Price not found', 'PRICE_NOT_FOUND');
     return {
       id: price.id,
-      navItemNo: price.navItemNo,
+      priceId: price.priceId,
+      itemId: price.itemId,
       titleEn: price.item.titleEn,
+      titleAm: price.item.titleAm,
       branchId: price.branchId,
       uom: price.uom,
       price: Number(price.price),
-      discountPct: price.discountPct ? Number(price.discountPct) : null,
       startDate: price.startDate?.toISOString() ?? null,
       endDate: price.endDate?.toISOString() ?? null,
       customerNo: price.customerNo,

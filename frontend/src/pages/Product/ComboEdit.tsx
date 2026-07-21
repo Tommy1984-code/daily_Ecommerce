@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import Input from "../../components/form/input/InputField";
 import ItemCombo from "../../components/form/ItemCombo";
@@ -7,28 +7,32 @@ import { AngleLeftIcon, PlusIcon, BoxIcon, CheckCircleIcon } from "../../icons";
 import { useAuth } from "../../context/AuthContext";
 import {
   getItems,
-  createCombo,
+  getComboById,
+  updateCombo,
   type Item,
+  type ComboHeader,
 } from "../../services/productService";
 
-interface ComboLineForm {
+interface EditLineForm {
+  id?: string;
   itemId: string;
   itemDescription: string;
   quantity: number;
   uom: string;
 }
 
-export default function ComboCreate() {
+export default function ComboEdit() {
+  const { id } = useParams<{ id: string }>();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Item[]>([]);
-  const [loadingItems, setLoadingItems] = useState(true);
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [combo, setCombo] = useState<ComboHeader | null>(null);
+  const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [active, setActive] = useState(true);
-  const [lines, setLines] = useState<ComboLineForm[]>([
-    { itemId: "", itemDescription: "", quantity: 1, uom: "" },
-  ]);
+  const [lines, setLines] = useState<EditLineForm[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -36,32 +40,45 @@ export default function ComboCreate() {
       navigate("/", { replace: true });
       return;
     }
-    setLoadingItems(true);
-    getItems({ limit: 100 })
-      .then((res) => setItems(res.data))
-      .catch((err) => console.error("Failed to fetch items", err))
-      .finally(() => setLoadingItems(false));
-  }, [isAdmin, navigate]);
+    if (!id) {
+      navigate("/product/combos");
+      return;
+    }
+
+    async function load() {
+      setLoading(true);
+      try {
+        const [comboData, itemsRes] = await Promise.all([
+          getComboById(id),
+          getItems({ limit: 100 }),
+        ]);
+        setCombo(comboData);
+        setDescription(comboData.titleEn);
+        setPrice(String(comboData.price));
+        setActive(comboData.active);
+        setLines(
+          (comboData.lines || []).map((l) => ({
+            id: l.id,
+            itemId: l.itemId || "",
+            itemDescription: l.itemDescription || "",
+            quantity: l.quantity,
+            uom: l.uom || "",
+          }))
+        );
+        setItems(itemsRes.data);
+      } catch (err) {
+        console.error("Failed to load combo for edit", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [isAdmin, navigate, id]);
 
   const itemOptions = items.map((item) => ({
     value: item.itemId,
     label: `${item.itemId} — ${item.titleEn}`,
   }));
-
-  function handleComboItemSelect(value: string) {
-    const item = items.find((i) => i.itemId === value) || null;
-    setSelectedItem(item);
-    if (item && item.prices && item.prices.length > 0) {
-      const activePrice = item.prices.find((p) => p.price != null);
-      setPrice(activePrice ? String(Number(activePrice.price)) : "");
-    } else {
-      setPrice("");
-    }
-  }
-
-  const selectedItemLabel = selectedItem
-    ? { value: selectedItem.itemId, label: `${selectedItem.itemId} — ${selectedItem.titleEn}` }
-    : null;
 
   function getSelectedLineLabel(itemId: string) {
     const item = items.find((i) => i.itemId === itemId);
@@ -78,7 +95,7 @@ export default function ComboCreate() {
     setLines(lines.filter((_, i) => i !== index));
   }
 
-  function updateLine(index: number, field: keyof ComboLineForm, value: string | number) {
+  function updateLine(index: number, field: keyof EditLineForm, value: string | number) {
     const updated = [...lines];
     (updated[index] as any)[field] = value;
     if (field === "itemId") {
@@ -91,14 +108,14 @@ export default function ComboCreate() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedItem || !price) return;
+    if (!id || !price) return;
     setSubmitting(true);
     try {
-      await createCombo({
-        itemId: selectedItem.itemId,
+      await updateCombo(id, {
         price: Number(price),
         active,
         lines: lines.map((l) => ({
+          id: l.id,
           itemId: l.itemId,
           itemDescription: l.itemDescription,
           quantity: l.quantity,
@@ -107,21 +124,35 @@ export default function ComboCreate() {
       });
       navigate("/product/combos");
     } catch (err) {
-      console.error("Failed to create combo", err);
+      console.error("Failed to update combo", err);
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (loadingItems) {
+  if (loading) {
     return (
       <>
-        <PageMeta title="Create Combo | Dashboard" description="Create a new combo" />
+        <PageMeta title="Edit Combo | Dashboard" description="Edit combo bundle" />
         <div className="flex items-center justify-center py-32">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">Loading items...</p>
+            <p className="text-sm text-gray-500">Loading combo data...</p>
           </div>
+        </div>
+      </>
+    );
+  }
+
+  if (!combo) {
+    return (
+      <>
+        <PageMeta title="Edit Combo | Dashboard" description="Edit combo bundle" />
+        <div className="text-center py-32">
+          <p className="text-gray-500">Combo not found</p>
+          <button onClick={() => navigate("/product/combos")} className="mt-4 text-brand-600 hover:underline">
+            Back to Combos
+          </button>
         </div>
       </>
     );
@@ -129,7 +160,7 @@ export default function ComboCreate() {
 
   return (
     <>
-      <PageMeta title="Create Combo | Dashboard" description="Create a new combo" />
+      <PageMeta title="Edit Combo | Dashboard" description="Edit combo bundle" />
 
       <form onSubmit={handleSubmit}>
         <div className="flex items-center gap-4 mb-8">
@@ -142,10 +173,10 @@ export default function ComboCreate() {
           </button>
           <div>
             <h1 className="text-title-sm font-semibold text-gray-800 dark:text-white/90">
-              Create Combo
+              Edit Combo
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Create a new combo bundle from existing items
+                {combo.itemId} — {combo.titleEn}
             </p>
           </div>
         </div>
@@ -161,39 +192,40 @@ export default function ComboCreate() {
                     <BoxIcon className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold text-gray-800 dark:text-white/90">Combo Description</h2>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Select the main item for this combo</p>
+                    <h2 className="text-base font-semibold text-gray-800 dark:text-white/90">Combo Details</h2>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Edit combo description and pricing</p>
                   </div>
                 </div>
               </div>
               <div className="p-6 space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Select Combo Item <span className="text-red-500">*</span>
+                    Description <span className="text-red-500">*</span>
                   </label>
-                  <ItemCombo
-                    placeholder="Type to search an item..."
-                    options={itemOptions}
-                    selected={selectedItemLabel}
-                    onSelect={handleComboItemSelect}
+                  <Input
+                    type="text"
+                    placeholder="Enter combo description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
 
-                {selectedItem && (
-                  <div className="grid grid-cols-2 gap-5 p-4 bg-brand-50/50 dark:bg-brand-500/5 rounded-xl border border-brand-100 dark:border-brand-500/20">
-                    <div>
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1.5">Item Name</span>
-                      <span className="text-sm font-semibold text-gray-800 dark:text-white/90">{selectedItem.titleEn}</span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500 block mt-0.5">ID: {selectedItem.itemId}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1.5">Total Combo Price</span>
-                      <span className="text-lg font-bold text-brand-600 dark:text-brand-400">
-                        ETB {Number(price || 0).toFixed(2)}
-                      </span>
-                    </div>
+                <div className="grid grid-cols-2 gap-5 p-4 bg-brand-50/50 dark:bg-brand-500/5 rounded-xl border border-brand-100 dark:border-brand-500/20">
+                  <div>
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1.5">Combo ID</span>
+                    <span className="text-sm font-semibold text-gray-800 dark:text-white/90">{combo.itemId}</span>
                   </div>
-                )}
+                  <div className="text-right">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1.5">Price</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className="text-lg font-bold text-brand-600 dark:text-brand-400 bg-transparent border-none text-right w-full focus:outline-hidden"
+                    />
+                  </div>
+                </div>
 
                 <div className="flex items-center gap-3 pt-1">
                   <button
@@ -314,10 +346,8 @@ export default function ComboCreate() {
               </div>
               <div className="p-6 space-y-4">
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Combo Item</span>
-                  <span className="text-sm font-medium text-gray-800 dark:text-white/90 text-right max-w-[160px] truncate">
-                    {selectedItem ? selectedItem.titleEn : "—"}
-                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Combo ID</span>
+                  <span className="text-sm font-medium text-gray-800 dark:text-white/90">{combo.itemId}</span>
                 </div>
                 <div className="border-t border-gray-100 dark:border-white/[0.05]" />
                 <div className="flex justify-between items-center py-2">
@@ -333,7 +363,7 @@ export default function ComboCreate() {
                 </div>
                 <div className="border-t border-gray-100 dark:border-white/[0.05]" />
                 <div className="flex justify-between items-center py-3">
-                  <span className="text-sm font-semibold text-gray-800 dark:text-white/90">Total Price</span>
+                  <span className="text-sm font-semibold text-gray-800 dark:text-white/90">Price</span>
                   <span className="text-lg font-bold text-brand-600 dark:text-brand-400">
                     ETB {Number(price || 0).toFixed(2)}
                   </span>
@@ -342,18 +372,20 @@ export default function ComboCreate() {
                 <div className="pt-4 space-y-3">
                   <button
                     type="submit"
-                    disabled={submitting || !selectedItem || !price}
+                    disabled={submitting || !price}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
                     {submitting ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Creating...
+                        Saving...
                       </>
                     ) : (
                       <>
-                        <PlusIcon className="w-4 h-4" />
-                        Create Combo
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Changes
                       </>
                     )}
                   </button>

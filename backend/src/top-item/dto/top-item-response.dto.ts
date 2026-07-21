@@ -5,7 +5,7 @@ export class TopItemResponseDto {
   id: string;
 
   @ApiProperty()
-  navItemNo: string;
+  itemId: string;
 
   @ApiProperty()
   titleEn: string;

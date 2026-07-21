@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class ItemPriceInfo {
+  @ApiProperty({ description: 'Price ID from NAV', example: 'PR-001', nullable: true })
+  priceId: string | null;
+
   @ApiProperty({ description: 'Branch ID', example: 'BRANCH-001' })
   branchId: string;
 
@@ -9,9 +12,6 @@ class ItemPriceInfo {
 
   @ApiProperty({ description: 'Selling price', example: 45.50 })
   price: number;
-
-  @ApiProperty({ description: 'Discount percentage', example: 10, nullable: true })
-  discountPct: number | null;
 
   @ApiProperty({ description: 'Price valid from date', nullable: true })
   startDate: string | null;
@@ -36,7 +36,7 @@ class ItemStockInfo {
 
 export class ItemResponseDto {
   @ApiProperty({ description: 'NAV item number (primary key)', example: 'ITEM-0001' })
-  navItemNo: string;
+  itemId: string;
 
   @ApiProperty({ description: 'Item name in English', example: 'Fresh Milk 1L' })
   titleEn: string;
@@ -47,8 +47,8 @@ export class ItemResponseDto {
   @ApiProperty({ description: 'Category ID', example: '550e8400-e29b-41d4-a716-446655440000' })
   categoryId: string;
 
-  @ApiProperty({ description: 'Product group ID', example: '550e8400-e29b-41d4-a716-446655440001' })
-  productGroupId: string;
+  @ApiProperty({ description: 'Product ID', example: '550e8400-e29b-41d4-a716-446655440001' })
+  productId: string;
 
   @ApiProperty({ description: 'Brand ID', example: '550e8400-e29b-41d4-a716-446655440002' })
   brandId: string;
@@ -62,8 +62,8 @@ export class ItemResponseDto {
   @ApiProperty({ description: 'Specification in Amharic', nullable: true })
   specificationsAm: string | null;
 
-  @ApiProperty({ description: 'Unit of measurement', example: 'PCS', nullable: true })
-  uom: string | null;
+  @ApiProperty({ description: 'Sales unit of measurement', example: 'PCS', nullable: true })
+  salesUom: string | null;
 
   @ApiProperty({ description: 'Item status', example: 1 })
   status: number;
@@ -92,7 +92,7 @@ export class ItemResponseDto {
 
 export class ItemSearchResultDto {
   @ApiProperty({ description: 'NAV item number', example: 'ITEM-0001' })
-  navItemNo: string;
+  itemId: string;
 
   @ApiProperty({ description: 'Item name in English', example: 'Fresh Milk 1L' })
   titleEn: string;
@@ -106,8 +106,8 @@ export class ItemSearchResultDto {
   @ApiProperty({ description: 'Item image URL', nullable: true })
   image: string | null;
 
-  @ApiProperty({ description: 'Unit of measurement', nullable: true })
-  uom: string | null;
+  @ApiProperty({ description: 'Sales unit of measurement', nullable: true })
+  salesUom: string | null;
 
   @ApiProperty({ description: 'Category name in English' })
   categoryTitleEn: string;

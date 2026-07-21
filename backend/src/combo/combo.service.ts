@@ -31,7 +31,7 @@ export class ComboService {
     return paginate(
       data.map((h) => ({
         id: h.id,
-        navItemNo: h.navItemNo,
+        itemId: h.itemId,
         titleEn: h.item.titleEn,
         description: h.description,
         price: Number(h.price),
@@ -52,7 +52,7 @@ export class ComboService {
         item: { select: { titleEn: true } },
         lines: {
           include: { item: { select: { titleEn: true } } },
-          orderBy: { navItemNo: 'asc' },
+          orderBy: { itemId: 'asc' },
         },
       },
     });
@@ -60,7 +60,7 @@ export class ComboService {
 
     return {
       id: header.id,
-      navItemNo: header.navItemNo,
+      itemId: header.itemId,
       titleEn: header.item.titleEn,
       description: header.description,
       price: Number(header.price),
@@ -68,12 +68,12 @@ export class ComboService {
       lineCount: header.lines.length,
       lines: header.lines.map((l) => ({
         id: l.id,
-        headerId: l.headerId,
-        navItemNo: l.navItemNo,
+        headerNumber: l.headerNumber,
+        itemId: l.itemId,
         titleEn: l.item.titleEn,
         itemDescription: l.itemDescription,
         quantity: Number(l.quantity),
-        salesUom: l.salesUom,
+        uom: l.uom,
       })),
       createdAt: header.createdAt.toISOString(),
     };
@@ -83,15 +83,15 @@ export class ComboService {
     const header = await this.prisma.$transaction(async (tx) => {
       const created = await tx.comboHeader.create({
         data: {
-          navItemNo: dto.navItemNo,
+          itemId: dto.itemId,
           price: dto.price,
           active: dto.active ?? true,
           lines: {
             create: dto.lines.map((line) => ({
-              navItemNo: line.navItemNo,
+              itemId: line.itemId,
               itemDescription: line.itemDescription,
               quantity: line.quantity,
-              salesUom: line.salesUom,
+              uom: line.uom,
             })),
           },
         },
@@ -107,7 +107,7 @@ export class ComboService {
 
     return {
       id: header.id,
-      navItemNo: header.navItemNo,
+      itemId: header.itemId,
       titleEn: header.item.titleEn,
       description: header.description,
       price: Number(header.price),
@@ -115,12 +115,12 @@ export class ComboService {
       lineCount: header.lines.length,
       lines: header.lines.map((l) => ({
         id: l.id,
-        headerId: l.headerId,
-        navItemNo: l.navItemNo,
+        headerNumber: l.headerNumber,
+        itemId: l.itemId,
         titleEn: l.item.titleEn,
         itemDescription: l.itemDescription,
         quantity: Number(l.quantity),
-        salesUom: l.salesUom,
+        uom: l.uom,
       })),
       createdAt: header.createdAt.toISOString(),
     };
@@ -134,23 +134,48 @@ export class ComboService {
     if (dto.price !== undefined) data.price = dto.price;
     if (dto.active !== undefined) data.active = dto.active;
 
+    // Handle lines if provided
+    if (dto.lines && dto.lines.length > 0) {
+      data.lines = {
+        deleteMany: {},
+        create: dto.lines.map((line) => ({
+          itemId: line.itemId,
+          itemDescription: line.itemDescription,
+          quantity: line.quantity,
+          uom: line.uom,
+        })),
+      };
+    }
+
     const header = await this.prisma.comboHeader.update({
       where: { id },
       data,
       include: {
         item: { select: { titleEn: true } },
-        _count: { select: { lines: true } },
+        lines: {
+          include: { item: { select: { titleEn: true } } },
+          orderBy: { itemId: 'asc' },
+        },
       },
     });
 
     return {
       id: header.id,
-      navItemNo: header.navItemNo,
+      itemId: header.itemId,
       titleEn: header.item.titleEn,
       description: header.description,
       price: Number(header.price),
       active: header.active,
-      lineCount: header._count.lines,
+      lineCount: header.lines.length,
+      lines: header.lines.map((l) => ({
+        id: l.id,
+        headerNumber: l.headerNumber,
+        itemId: l.itemId,
+        titleEn: l.item.titleEn,
+        itemDescription: l.itemDescription,
+        quantity: Number(l.quantity),
+        uom: l.uom,
+      })),
       createdAt: header.createdAt.toISOString(),
     };
   }

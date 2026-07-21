@@ -14,7 +14,7 @@ export interface PaginatedResponse<T> {
 
 export interface Category {
   id: string;
-  code: string;
+  categoryId: string;
   titleEn: string;
   titleAm: string;
   image: string | null;
@@ -24,7 +24,7 @@ export interface Category {
 
 export interface ProductGroup {
   id: string;
-  code: string;
+  productId: string;
   titleEn: string;
   titleAm: string;
   categoryId: string;
@@ -37,10 +37,10 @@ export interface ProductGroup {
 
 export interface Brand {
   id: string;
-  code: string;
+  brandId: string;
   titleEn: string;
   titleAm: string;
-  productGroupId: string;
+  productId: string;
   productGroupTitleEn: string;
   productGroupTitleAm: string;
   categoryTitleEn: string;
@@ -67,16 +67,16 @@ export interface ItemStock {
 }
 
 export interface Item {
-  navItemNo: string;
+  itemId: string;
   titleEn: string;
   titleAm: string;
   categoryId: string;
-  productGroupId: string;
+  productId: string;
   brandId: string;
   image: string | null;
   specificationsEn: string | null;
   specificationsAm: string | null;
-  uom: string | null;
+  salesUom: string | null;
   status: number;
   categoryTitleEn: string;
   productGroupTitleEn: string;
@@ -141,7 +141,7 @@ export async function getItems(params: {
   limit?: number;
   q?: string;
   categoryId?: string;
-  productGroupId?: string;
+  productId?: string;
   brandId?: string;
 }): Promise<PaginatedResponse<Item>> {
   const cleanParams: Record<string, string | number> = {};
@@ -149,14 +149,14 @@ export async function getItems(params: {
   if (params.limit) cleanParams.limit = params.limit;
   if (params.q) cleanParams.q = params.q;
   if (params.categoryId) cleanParams.categoryId = params.categoryId;
-  if (params.productGroupId) cleanParams.productGroupId = params.productGroupId;
+  if (params.productId) cleanParams.productId = params.productId;
   if (params.brandId) cleanParams.brandId = params.brandId;
   const res = await api.get("/v1/product/items", { params: cleanParams });
   return res.data;
 }
 
-export async function getItemByNavNo(navItemNo: string): Promise<Item> {
-  const res = await api.get(`/v1/product/items/${navItemNo}`);
+export async function getItemByItemId(itemId: string): Promise<Item> {
+  const res = await api.get(`/v1/product/items/${itemId}`);
   return res.data;
 }
 
@@ -164,7 +164,7 @@ export async function getItemByNavNo(navItemNo: string): Promise<Item> {
 export interface ItemPriceRecord {
   id: string;
   priceId: string | null;
-  navItemNo: string;
+  itemId: string;
   titleEn: string;
   titleAm: string;
   branchId: string;
@@ -185,9 +185,11 @@ export async function getPrices(page = 1, limit = 20, q?: string): Promise<Pagin
 // Discount
 export interface DiscountRecord {
   id: string;
-  navItemNo: string;
+  itemId: string;
   titleEn: string;
-  discountPct: number;
+  titleAm?: string;
+  uom?: string;
+  discountPer: number;
   createdAt: string;
 }
 
@@ -200,17 +202,17 @@ export async function getDiscounts(page = 1, limit = 20): Promise<PaginatedRespo
 // Combo
 export interface ComboLine {
   id: string;
-  headerId: string;
-  navItemNo: string;
+  headerNumber: string;
+  itemId: string;
   titleEn: string;
   itemDescription: string | null;
   quantity: number;
-  salesUom: string | null;
+  uom: string | null;
 }
 
 export interface ComboHeader {
   id: string;
-  navItemNo: string;
+  itemId: string;
   titleEn: string;
   description: string | null;
   price: number;
@@ -230,7 +232,7 @@ export async function getComboById(id: string): Promise<ComboHeader> {
   return res.data;
 }
 
-export async function createCombo(data: { navItemNo: string; price: number; active?: boolean; lines: { navItemNo: string; itemDescription: string; quantity: number }[] }): Promise<ComboHeader> {
+export async function createCombo(data: { itemId: string; price: number; active?: boolean; lines: { itemId: string; itemDescription: string; quantity: number }[] }): Promise<ComboHeader> {
   const res = await api.post("/v1/product/combos", data);
   return res.data;
 }
@@ -239,23 +241,31 @@ export async function deleteCombo(id: string): Promise<void> {
   await api.delete(`/v1/product/combos/${id}`);
 }
 
+export async function updateCombo(
+  id: string,
+  data: { price?: number; active?: boolean; lines?: { id?: string; itemId: string; itemDescription?: string; quantity: number; uom?: string }[] }
+): Promise<ComboHeader> {
+  const res = await api.patch(`/v1/product/combos/${id}`, data);
+  return res.data;
+}
+
 // Top Item
 export interface TopItemRecord {
   id: string;
-  navItemNo: string;
+  itemId: string;
   titleEn: string;
   titleAm: string;
   image: string | null;
   createdAt: string;
 }
 
-export async function getTopItems(page = 1, limit = 20): Promise<PaginatedResponse<TopItemRecord>> {
-  const res = await api.get("/v1/product/top-items", { params: { page, limit } });
+export async function getTopItems(): Promise<TopItemRecord[]> {
+  const res = await api.get("/v1/product/top-items");
   return res.data;
 }
 
-export async function addTopItem(navItemNo: string): Promise<TopItemRecord> {
-  const res = await api.post("/v1/product/top-items", { navItemNo });
+export async function addTopItem(itemId: string): Promise<TopItemRecord> {
+  const res = await api.post("/v1/product/top-items", { itemId });
   return res.data;
 }
 
@@ -373,13 +383,13 @@ export async function deleteBrand(id: string): Promise<void> {
 // Featured Categories
 export interface FeaturedCategory {
   id: string;
-  code: string;
+  productId: string;
   titleEn: string;
   titleAm: string;
   image: string | null;
   featuredImage: string | null;
   brandCount: number;
-  brands: { id: string; code: string; titleEn: string; titleAm: string; featured: boolean }[];
+  brands: { id: string; brandId: string; titleEn: string; titleAm: string; featured: boolean }[];
 }
 
 export async function getFeaturedCategories(page = 1, limit = 10, q?: string): Promise<PaginatedResponse<FeaturedCategory>> {
@@ -387,7 +397,7 @@ export async function getFeaturedCategories(page = 1, limit = 10, q?: string): P
   return res.data;
 }
 
-export async function createFeaturedCategory(data: { productGroupId: string; featuredImage?: string; brandIds: string[] }): Promise<FeaturedCategory> {
+export async function createFeaturedCategory(data: { productId: string; featuredImage?: string; brandIds: string[] }): Promise<FeaturedCategory> {
   const res = await api.post("/v1/product/featured-categories", data);
   return res.data;
 }
@@ -396,8 +406,8 @@ export async function updateFeaturedBanner(id: string, featuredImage: string): P
   await api.patch(`/v1/product/featured-categories/${id}/banner`, { featuredImage });
 }
 
-export async function toggleFeaturedBrand(productGroupId: string, brandId: string, featured: boolean): Promise<void> {
-  await api.patch(`/v1/product/featured-categories/${productGroupId}/toggle-featured`, { brandId, featured });
+export async function toggleFeaturedBrand(productId: string, brandId: string, featured: boolean): Promise<void> {
+  await api.patch(`/v1/product/featured-categories/${productId}/toggle-featured`, { brandId, featured });
 }
 
 export async function toggleFeaturedCategory(id: string): Promise<void> {
@@ -405,13 +415,22 @@ export async function toggleFeaturedCategory(id: string): Promise<void> {
 }
 
 export async function updateItem(
-  navItemNo: string,
+  itemId: string,
   data: { image?: string; specificationsEn?: string; specificationsAm?: string },
 ): Promise<Item> {
-  const res = await api.patch(`/v1/product/items/${navItemNo}`, data);
+  const res = await api.patch(`/v1/product/items/${itemId}`, data);
   return res.data;
 }
 
-export async function deleteItem(navItemNo: string): Promise<void> {
-  await api.delete(`/v1/product/items/${navItemNo}`);
+export async function deleteItem(itemId: string): Promise<void> {
+  await api.delete(`/v1/product/items/${itemId}`);
+}
+
+export async function importItems(file: File): Promise<{ imported: number; errors: string[] }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await api.post("/v1/product/items/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
 }

@@ -16,7 +16,7 @@ export class TopItemService {
 
     return items.map((t) => ({
       id: t.id,
-      navItemNo: t.navItemNo,
+      itemId: t.itemId,
       titleEn: t.item.titleEn,
       titleAm: t.item.titleAm,
       image: t.item.image,
@@ -26,13 +26,13 @@ export class TopItemService {
 
   async create(dto: CreateTopItemDto): Promise<TopItemResponseDto> {
     const topItem = await this.prisma.topItem.create({
-      data: { navItemNo: dto.navItemNo },
+      data: { itemId: dto.itemId },
       include: { item: { select: { titleEn: true, titleAm: true, image: true } } },
     });
 
     return {
       id: topItem.id,
-      navItemNo: topItem.navItemNo,
+      itemId: topItem.itemId,
       titleEn: topItem.item.titleEn,
       titleAm: topItem.item.titleAm,
       image: topItem.item.image,

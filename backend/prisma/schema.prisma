@@ -119,34 +119,40 @@ model Order {
   @@map("orders")
 }
 
+// ============================================================
+// PRODUCT MODULE — matches old dailyMart NAV schema
+// ============================================================
+
 model Category {
-  id        String   @id @default(uuid()) @db.Uuid
-  titleEn   String   @map("title_en") @db.VarChar(200)
-  titleAm   String   @map("title_am") @db.VarChar(200)
-  image     String?  @db.VarChar(500)
-  syncedAt  DateTime @default(now()) @map("synced_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid()) @db.Uuid
+  categoryId  String   @unique @map("category_id") @db.VarChar(50)
+  titleEn     String   @map("title_en") @db.VarChar(200)
+  titleAm     String   @map("title_am") @db.VarChar(200)
+  image       String?  @db.VarChar(500)
+  syncedAt    DateTime @default(now()) @map("synced_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   productGroups ProductGroup[]
   items         Item[]
 
   @@index([titleEn])
   @@index([titleAm])
-  @@map("categories")
+  @@map("category")
 }
 
 model ProductGroup {
-  id            String   @id @default(uuid()) @db.Uuid
-  titleEn       String   @map("title_en") @db.VarChar(200)
-  titleAm       String   @map("title_am") @db.VarChar(200)
-  categoryId    String   @map("category_id") @db.Uuid
-  image         String?  @db.VarChar(500)
-  featured      Boolean  @default(false)
-  featuredImage String?  @map("featured_image") @db.VarChar(500)
-  syncedAt      DateTime @default(now()) @map("synced_at")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid()) @db.Uuid
+  productId    String   @unique @map("product_id") @db.VarChar(50)
+  categoryId   String   @map("category_id") @db.Uuid
+  titleEn      String   @map("title_en") @db.VarChar(200)
+  titleAm      String   @map("title_am") @db.VarChar(200)
+  image        String?  @db.VarChar(500)
+  featured     Boolean  @default(false)
+  featuredImage String? @map("featured_image") @db.VarChar(500)
+  syncedAt     DateTime @default(now()) @map("synced_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   category Category @relation(fields: [categoryId], references: [id])
   brands   Brand[]
@@ -155,97 +161,115 @@ model ProductGroup {
   @@index([categoryId])
   @@index([titleEn])
   @@index([titleAm])
-  @@map("product_groups")
+  @@map("product_group")
 }
 
 model Brand {
-  id             String   @id @default(uuid()) @db.Uuid
-  titleEn        String   @map("title_en") @db.VarChar(200)
-  titleAm        String   @map("title_am") @db.VarChar(200)
-  productGroupId String   @map("product_group_id") @db.Uuid
-  image          String?  @db.VarChar(500)
-  featured       Boolean  @default(false)
-  syncedAt       DateTime @default(now()) @map("synced_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  brandId   String   @unique @map("brand_id") @db.VarChar(50)
+  productId String   @map("product_id") @db.Uuid
+  titleEn   String   @map("title_en") @db.VarChar(200)
+  titleAm   String   @map("title_am") @db.VarChar(200)
+  image     String?  @db.VarChar(500)
+  featured  Boolean  @default(false)
+  syncedAt  DateTime @default(now()) @map("synced_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  productGroup ProductGroup @relation(fields: [productGroupId], references: [id])
+  productGroup ProductGroup @relation(fields: [productId], references: [id])
   items        Item[]
 
-  @@index([productGroupId])
+  @@index([productId])
   @@index([titleEn])
   @@index([titleAm])
-  @@map("brands")
+  @@map("brand")
 }
 
 model Item {
-  navItemNo        String   @id @map("nav_item_no") @db.VarChar(50)
+  itemId           String   @id @map("item_id") @db.VarChar(50)
+  categoryId       String   @map("category_id") @db.Uuid
+  productId        String   @map("product_id") @db.Uuid
+  brandId          String   @map("brand_id") @db.Uuid
   titleEn          String   @map("title_en") @db.VarChar(200)
   titleAm          String   @map("title_am") @db.VarChar(200)
-  categoryId       String   @map("category_id") @db.Uuid
-  productGroupId   String   @map("product_group_id") @db.Uuid
-  brandId          String   @map("brand_id") @db.Uuid
   image            String?  @db.VarChar(500)
   specificationsEn String?  @map("specifications_en") @db.Text
   specificationsAm String?  @map("specifications_am") @db.Text
-  uom              String?  @db.VarChar(20)
+  itemCode1        String?  @map("item_code1") @db.VarChar(50)
+  salesUom         String?  @map("sales_uom") @db.VarChar(20)
   status           Int      @default(1)
   syncedAt         DateTime @default(now()) @map("synced_at")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   category      Category      @relation(fields: [categoryId], references: [id])
-  productGroup  ProductGroup  @relation(fields: [productGroupId], references: [id])
+  productGroup  ProductGroup  @relation(fields: [productId], references: [id])
   brand         Brand         @relation(fields: [brandId], references: [id])
   prices        ItemPrice[]
+  priceDiscounts PriceDiscount[]
   stockSnapshots ItemStockSnapshot[]
-  comboHeaders   ComboHeader[]
-  comboLines     ComboLine[]
-  topItems       TopItem[]
+  comboHeaders  ComboHeader[]
+  comboLines    ComboLine[]
+  topItems      TopItem[]
 
   @@index([categoryId])
-  @@index([productGroupId])
+  @@index([productId])
   @@index([brandId])
   @@index([titleEn])
   @@index([titleAm])
-  @@map("items")
+  @@map("item")
 }
 
 model ItemPrice {
-  id          String    @id @default(uuid()) @db.Uuid
-  navItemNo   String    @map("nav_item_no") @db.VarChar(50)
-  branchId    String    @map("branch_id") @db.VarChar(50)
-  uom         String?   @db.VarChar(20)
-  price       Decimal   @db.Decimal(12, 2)
-  discountPct Decimal?  @map("discount_pct") @db.Decimal(5, 2)
-  startDate   DateTime? @map("start_date")
-  endDate     DateTime? @map("end_date")
-  customerNo  String?   @map("customer_no") @db.VarChar(50)
-  syncedAt    DateTime  @default(now()) @map("synced_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id         String    @id @default(uuid()) @db.Uuid
+  priceId    String?   @map("price_id") @db.VarChar(50)
+  itemId     String    @map("item_id") @db.VarChar(50)
+  branchId   String    @map("branch_id") @db.VarChar(50)
+  uom        String?   @db.VarChar(20)
+  price      Decimal   @db.Decimal(12, 2)
+  startDate  DateTime? @map("start_date")
+  endDate    DateTime? @map("end_date")
+  customerNo String?   @map("customer_no") @db.VarChar(50)
+  syncedAt   DateTime  @default(now()) @map("synced_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
 
-  item Item @relation(fields: [navItemNo], references: [navItemNo])
+  item Item @relation(fields: [itemId], references: [itemId])
 
-  @@unique([navItemNo, branchId])
-  @@index([navItemNo])
+  @@unique([itemId, branchId])
+  @@index([itemId])
   @@index([branchId])
-  @@map("item_prices")
+  @@map("price")
+}
+
+model PriceDiscount {
+  id         String    @id @default(uuid()) @db.Uuid
+  itemId     String    @map("item_id") @db.VarChar(50)
+  uom        String?   @db.VarChar(20)
+  discountPer Decimal  @map("discount_per") @db.Decimal(5, 2)
+  startDate  DateTime? @map("start_date")
+  endDate    DateTime? @map("end_date")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  item Item @relation(fields: [itemId], references: [itemId])
+
+  @@index([itemId])
+  @@map("price_discount")
 }
 
 model ItemStockSnapshot {
   id        String   @id @default(uuid()) @db.Uuid
-  navItemNo String   @map("nav_item_no") @db.VarChar(50)
+  itemId    String   @map("item_id") @db.VarChar(50)
   branchId  String   @map("branch_id") @db.VarChar(50)
   qty       Int      @default(0)
   syncedAt  DateTime @default(now()) @map("synced_at")
   createdAt DateTime @default(now()) @map("created_at")
 
-  item Item @relation(fields: [navItemNo], references: [navItemNo])
+  item Item @relation(fields: [itemId], references: [itemId])
 
-  @@unique([navItemNo, branchId])
-  @@index([navItemNo])
+  @@unique([itemId, branchId])
+  @@index([itemId])
   @@index([branchId])
-  @@map("item_stock_snapshots")
+  @@map("item_stock_snapshot")
 }
 
 model NavSyncLog {
@@ -264,46 +288,46 @@ model NavSyncLog {
 
 model ComboHeader {
   id          String   @id @default(uuid()) @db.Uuid
-  navItemNo   String   @map("nav_item_no") @db.VarChar(50)
+  itemId      String   @map("item_id") @db.VarChar(50)
   description String?  @db.VarChar(500)
   price       Decimal  @db.Decimal(12, 2)
   active      Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  item  Item        @relation(fields: [navItemNo], references: [navItemNo])
+  item  Item       @relation(fields: [itemId], references: [itemId])
   lines ComboLine[]
 
-  @@index([navItemNo])
-  @@map("combo_headers")
+  @@index([itemId])
+  @@map("combo_header")
 }
 
 model ComboLine {
   id             String  @id @default(uuid()) @db.Uuid
-  headerId       String  @map("header_id") @db.Uuid
-  navItemNo      String  @map("nav_item_no") @db.VarChar(50)
+  headerNumber   String  @map("header_number") @db.Uuid
+  itemId         String  @map("item_id") @db.VarChar(50)
   itemDescription String? @map("item_description") @db.VarChar(500)
   quantity       Decimal @db.Decimal(12, 2)
-  salesUom       String? @map("sales_uom") @db.VarChar(20)
+  uom            String? @map("uom") @db.VarChar(20)
 
-  header ComboHeader @relation(fields: [headerId], references: [id], onDelete: Cascade)
-  item   Item        @relation(fields: [navItemNo], references: [navItemNo])
+  header ComboHeader @relation(fields: [headerNumber], references: [id], onDelete: Cascade)
+  item   Item        @relation(fields: [itemId], references: [itemId])
 
-  @@index([headerId])
-  @@index([navItemNo])
-  @@map("combo_lines")
+  @@index([headerNumber])
+  @@index([itemId])
+  @@map("combo_line")
 }
 
 model TopItem {
   id        String   @id @default(uuid()) @db.Uuid
-  navItemNo String   @map("nav_item_no") @db.VarChar(50)
+  itemId    String   @map("item_id") @db.VarChar(50)
   createdAt DateTime @default(now()) @map("created_at")
 
-  item Item @relation(fields: [navItemNo], references: [navItemNo])
+  item Item @relation(fields: [itemId], references: [itemId])
 
-  @@unique([navItemNo])
-  @@index([navItemNo])
-  @@map("top_items")
+  @@unique([itemId])
+  @@index([itemId])
+  @@map("top_item")
 }
 
 model LandMark {
@@ -350,14 +374,14 @@ model TimeRange {
 }
 
 model LandMarkPrice {
-  id          String   @id @default(uuid()) @db.Uuid
-  dateId      String   @map("date_id") @db.Uuid
-  timeRange   String   @map("time_range") @db.VarChar(50)
+  id           String   @id @default(uuid()) @db.Uuid
+  dateId       String   @map("date_id") @db.Uuid
+  timeRange    String   @map("time_range") @db.VarChar(50)
   landMarkCode String  @map("land_mark_code") @db.VarChar(50)
-  shopCode    String   @map("shop_code") @db.VarChar(50)
-  price       Decimal  @db.Decimal(12, 2)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  shopCode     String   @map("shop_code") @db.VarChar(50)
+  price        Decimal  @db.Decimal(12, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   date      DeliveryDate @relation(fields: [dateId], references: [id])
   landMark  LandMark     @relation(fields: [landMarkCode], references: [code])

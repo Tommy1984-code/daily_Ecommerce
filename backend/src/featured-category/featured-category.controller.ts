@@ -1,13 +1,16 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import {
-  ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags,
+  ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags,
   ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { FeaturedCategoryService } from './featured-category.service';
 import { RBAC } from '../auth/decorators/roles.decorator';
+import { CreateFeaturedCategoryDto } from './dto/create-featured-category.dto';
 import { FeaturedCategoryResponseDto } from './dto/featured-category-response.dto';
+import { FeaturedCategoryQueryDto } from './dto/featured-category-query.dto';
 import { UpdateBannerDto } from './dto/update-banner.dto';
 import { ToggleBrandFeaturedDto } from './dto/toggle-brand-featured.dto';
+import { PaginatedResponse } from '../product/dto/pagination.dto';
 
 @ApiTags('Product - Featured Categories')
 @ApiBearerAuth()
@@ -17,12 +20,26 @@ export class FeaturedCategoryController {
 
   @Get()
   @RBAC('product', 'read')
-  @ApiOperation({ summary: 'List featured categories', description: 'Returns product groups with featured=true and their brands.' })
-  @ApiOkResponse({ description: 'List of featured categories' })
+  @ApiOperation({ summary: 'List featured categories', description: 'Returns paginated featured categories with search.' })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 10 })
+  @ApiQuery({ name: 'q', required: false, example: 'bakery' })
+  @ApiOkResponse({ description: 'Paginated list of featured categories' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
-  async findAll(): Promise<FeaturedCategoryResponseDto[]> {
-    return this.featured.findAll();
+  async findAll(@Query() query: FeaturedCategoryQueryDto): Promise<PaginatedResponse<FeaturedCategoryResponseDto>> {
+    return this.featured.findAll(query.page, query.limit, query.q);
+  }
+
+  @Post()
+  @RBAC('product', 'write')
+  @ApiOperation({ summary: 'Create featured category', description: 'Marks a product group as featured with selected brands and optional banner.' })
+  @ApiCreatedResponse({ description: 'Featured category created' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
+  @ApiForbiddenResponse({ description: 'Insufficient permissions' })
+  @ApiNotFoundResponse({ description: 'Product group not found' })
+  async create(@Body() dto: CreateFeaturedCategoryDto): Promise<FeaturedCategoryResponseDto> {
+    return this.featured.create(dto);
   }
 
   @Patch(':id/banner')

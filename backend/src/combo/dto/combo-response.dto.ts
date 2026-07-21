@@ -5,10 +5,10 @@ export class ComboLineResponseDto {
   id: string;
 
   @ApiProperty()
-  headerId: string;
+  headerNumber: string;
 
   @ApiProperty()
-  navItemNo: string;
+  itemId: string;
 
   @ApiProperty()
   titleEn: string;
@@ -20,7 +20,7 @@ export class ComboLineResponseDto {
   quantity: number;
 
   @ApiPropertyOptional()
-  salesUom: string | null;
+  uom: string | null;
 }
 
 export class ComboHeaderResponseDto {
@@ -28,7 +28,7 @@ export class ComboHeaderResponseDto {
   id: string;
 
   @ApiProperty()
-  navItemNo: string;
+  itemId: string;
 
   @ApiProperty()
   titleEn: string;

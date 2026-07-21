@@ -4,6 +4,9 @@ export class ProductGroupResponseDto {
   @ApiProperty({ description: 'Product group unique identifier', example: '550e8400-e29b-41d4-a716-446655440001' })
   id: string;
 
+  @ApiProperty({ description: 'NAV product ID', example: 'PG-001' })
+  productId: string;
+
   @ApiProperty({ description: 'Product group name in English', example: 'Milk' })
   titleEn: string;
 

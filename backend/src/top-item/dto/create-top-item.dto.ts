@@ -4,5 +4,5 @@ import { IsString } from 'class-validator';
 export class CreateTopItemDto {
   @ApiProperty()
   @IsString()
-  navItemNo: string;
+  itemId: string;
 }

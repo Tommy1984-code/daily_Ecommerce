@@ -23,10 +23,10 @@ export class ItemsQueryDto extends PaginationDto {
   @IsUUID()
   categoryId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by Product Group ID', example: 'uuid' })
+  @ApiPropertyOptional({ description: 'Filter by Product ID', example: 'uuid' })
   @IsOptional()
   @IsUUID()
-  productGroupId?: string;
+  productId?: string;
 
   @ApiPropertyOptional({ description: 'Filter by Brand ID', example: 'uuid' })
   @IsOptional()

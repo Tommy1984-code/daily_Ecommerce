@@ -5,7 +5,13 @@ export class BrandFeaturedDto {
   id: string;
 
   @ApiProperty()
+  brandId: string;
+
+  @ApiProperty()
   titleEn: string;
+
+  @ApiProperty()
+  titleAm: string;
 
   @ApiProperty()
   featured: boolean;
@@ -14,6 +20,9 @@ export class BrandFeaturedDto {
 export class FeaturedCategoryResponseDto {
   @ApiProperty()
   id: string;
+
+  @ApiProperty()
+  productId: string;
 
   @ApiProperty()
   titleEn: string;

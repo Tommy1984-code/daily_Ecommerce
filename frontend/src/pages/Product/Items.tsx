@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import {
@@ -51,7 +51,7 @@ export default function Items() {
   const [brands, setBrands] = useState<Brand[]>([]);
 
   const [categoryId, setCategoryId] = useState(searchParams.get("categoryId") || "");
-  const [groupId, setGroupId] = useState(searchParams.get("productGroupId") || "");
+  const [groupId, setGroupId] = useState(searchParams.get("productId") || "");
   const [brandId, setBrandId] = useState(searchParams.get("brandId") || "");
 
   const [editItem, setEditItem] = useState<Item | null>(null);
@@ -102,7 +102,7 @@ export default function Items() {
         limit,
         q: search || undefined,
         categoryId: categoryId || undefined,
-        productGroupId: groupId || undefined,
+        productId: groupId || undefined,
         brandId: brandId || undefined,
       });
       setItems(res.data);
@@ -120,12 +120,21 @@ export default function Items() {
     fetchCategories();
   }, [isAdmin, navigate]);
 
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => { fetchGroups(categoryId); }, [categoryId]);
   useEffect(() => { fetchBrands(groupId); }, [groupId]);
   useEffect(() => { fetchItems(1); }, [categoryId, groupId, brandId]);
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => fetchItems(1), 400);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [search]);
 
   function handleSearchKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter") fetchItems(1);
+    if (e.key === "Enter") {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+      fetchItems(1);
+    }
   }
 
   function handleCategoryChange(value: string) {
@@ -151,7 +160,7 @@ export default function Items() {
     if (!editItem) return;
     setEditSaving(true);
     try {
-      await updateItem(editItem.navItemNo, {
+      await updateItem(editItem.itemId, {
         image: editImage || undefined,
         specificationsEn: editSpecEn || undefined,
         specificationsAm: editSpecAm || undefined,
@@ -175,7 +184,7 @@ export default function Items() {
     if (!deleteItemTarget) return;
     setDeleting(true);
     try {
-      await deleteItem(deleteItemTarget.navItemNo);
+      await deleteItem(deleteItemTarget.itemId);
       setShowDelete(false);
       setDeleteItemTarget(null);
       fetchItems(page);
@@ -186,9 +195,18 @@ export default function Items() {
     }
   }
 
-  const categoryOptions = categories.map((c) => ({ value: c.id, label: c.titleEn }));
-  const groupOptions = groups.map((g) => ({ value: g.id, label: g.titleEn }));
-  const brandOptions = brands.map((b) => ({ value: b.id, label: b.titleEn }));
+  const categoryOptions = [
+    { value: "", label: "All Categories" },
+    ...categories.map((c) => ({ value: c.id, label: c.titleEn })),
+  ];
+  const groupOptions = [
+    { value: "", label: "All Product Groups" },
+    ...groups.map((g) => ({ value: g.id, label: g.titleEn })),
+  ];
+  const brandOptions = [
+    { value: "", label: "All Brands" },
+    ...brands.map((b) => ({ value: b.id, label: b.titleEn })),
+  ];
 
   return (
     <>
@@ -214,7 +232,7 @@ export default function Items() {
         </div>
         <div className="min-w-[160px]">
           <Select
-            placeholder="All Categories"
+            placeholder=""
             options={categoryOptions}
             onChange={handleCategoryChange}
             defaultValue={categoryId}
@@ -222,7 +240,8 @@ export default function Items() {
         </div>
         <div className="min-w-[160px]">
           <Select
-            placeholder="All Product Groups"
+            placeholder=""
+            key={categoryId}
             options={groupOptions}
             onChange={handleGroupChange}
             defaultValue={groupId}
@@ -230,15 +249,13 @@ export default function Items() {
         </div>
         <div className="min-w-[160px]">
           <Select
-            placeholder="All Brands"
+            placeholder=""
+            key={groupId}
             options={brandOptions}
             onChange={setBrandId}
             defaultValue={brandId}
           />
         </div>
-        <Button variant="outline" disabled className="opacity-50 cursor-not-allowed">
-          Download
-        </Button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -272,9 +289,9 @@ export default function Items() {
                 items.map((item) => {
                   const activePrice = item.prices && item.prices.length > 0 ? item.prices[0] : null;
                   return (
-                    <TableRow key={item.navItemNo}>
+                    <TableRow key={item.itemId}>
                       <TableCell className="px-5 py-4 sm:px-6 text-start">
-                        <span className="font-mono text-xs text-gray-500">{item.navItemNo}</span>
+                        <span className="font-mono text-xs text-gray-500">{item.itemId}</span>
                       </TableCell>
                       <TableCell className="px-5 py-4 sm:px-6 text-start text-sm text-gray-500 dark:text-gray-400">
                         {item.categoryTitleEn}
@@ -299,7 +316,7 @@ export default function Items() {
                         )}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start text-sm text-gray-500 dark:text-gray-400">
-                        {activePrice?.uom || item.uom || "—"}
+                        {activePrice?.uom || item.salesUom || "—"}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
                         {item.image ? (
@@ -453,6 +470,8 @@ export default function Items() {
           </div>
         </div>
       </Modal>
+
+
     </>
   );
 }

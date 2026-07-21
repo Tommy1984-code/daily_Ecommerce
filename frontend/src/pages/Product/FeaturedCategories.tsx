@@ -22,7 +22,7 @@ import {
 
 interface BrandCheckItem {
   id: string;
-  code: string;
+  brandId: string;
   titleEn: string;
   titleAm: string;
   checked: boolean;
@@ -88,7 +88,7 @@ export default function FeaturedCategories() {
     setEditBrands(
       cat.brands.map((b) => ({
         id: b.id,
-        code: b.code,
+        brandId: b.brandId,
         titleEn: b.titleEn,
         titleAm: b.titleAm,
         checked: b.featured,
@@ -208,7 +208,7 @@ export default function FeaturedCategories() {
                 categories.map((cat) => (
                   <TableRow key={cat.id}>
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
-                      <span className="font-mono text-sm font-medium text-gray-800 dark:text-white/90">{cat.code}</span>
+                      <span className="font-mono text-sm font-medium text-gray-800 dark:text-white/90">{cat.productId}</span>
                     </TableCell>
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
                       <div>
@@ -294,7 +294,7 @@ export default function FeaturedCategories() {
                 </p>
                 <p>
                   <span className="text-gray-500">Product ID:</span>{" "}
-                  <span className="font-mono text-gray-800 dark:text-white/90">{detailCat.code}</span>
+                  <span className="font-mono text-gray-800 dark:text-white/90">{detailCat.productId}</span>
                 </p>
               </div>
 
@@ -313,7 +313,7 @@ export default function FeaturedCategories() {
                     <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                       {detailCat.brands.map((b) => (
                         <tr key={b.id}>
-                          <td className="px-3 py-2 font-mono text-xs text-gray-500">{b.code}</td>
+                          <td className="px-3 py-2 font-mono text-xs text-gray-500">{b.brandId}</td>
                           <td className="px-3 py-2 text-gray-800 dark:text-white/90">{b.titleEn}</td>
                           <td className="px-3 py-2 text-center">
                             {b.featured ? (

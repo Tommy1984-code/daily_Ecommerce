@@ -4,11 +4,17 @@ export class PriceResponseDto {
   @ApiProperty()
   id: string;
 
+  @ApiPropertyOptional()
+  priceId: string | null;
+
   @ApiProperty()
-  navItemNo: string;
+  itemId: string;
 
   @ApiProperty()
   titleEn: string;
+
+  @ApiProperty()
+  titleAm: string;
 
   @ApiProperty()
   branchId: string;
@@ -18,9 +24,6 @@ export class PriceResponseDto {
 
   @ApiProperty()
   price: number;
-
-  @ApiPropertyOptional()
-  discountPct: number | null;
 
   @ApiPropertyOptional()
   startDate: string | null;

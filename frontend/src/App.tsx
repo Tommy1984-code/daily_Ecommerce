@@ -25,6 +25,7 @@ import Prices from "./pages/Product/Pages";
 import Discounts from "./pages/Product/Discounts";
 import Combos from "./pages/Product/Combos";
 import ComboCreate from "./pages/Product/ComboCreate";
+import ComboEdit from "./pages/Product/ComboEdit";
 import TopItems from "./pages/Product/TopItems";
 import LandMarkPrices from "./pages/Product/LandMarkPrices";
 import LandMarkPriceCreate from "./pages/Product/LandMarkPriceCreate";
@@ -75,6 +76,7 @@ export default function App() {
               <Route path="/product/discounts" element={<Discounts />} />
               <Route path="/product/combos" element={<Combos />} />
               <Route path="/product/combos/new" element={<ComboCreate />} />
+              <Route path="/product/combos/:id/edit" element={<ComboEdit />} />
               <Route path="/product/top-items" element={<TopItems />} />
               <Route path="/product/land-mark-prices" element={<LandMarkPrices />} />
               <Route path="/product/land-mark-prices/new" element={<LandMarkPriceCreate />} />

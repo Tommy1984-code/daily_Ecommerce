@@ -1,33 +1,24 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class DiscountResponseDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Discount unique identifier' })
   id: string;
 
-  @ApiProperty()
-  navItemNo: string;
+  @ApiProperty({ description: 'NAV item number', example: 'ITEM-0001' })
+  itemId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Item title in English' })
   titleEn: string;
 
-  @ApiProperty()
-  branchId: string;
+  @ApiPropertyOptional({ description: 'Item title in Amharic' })
+  titleAm?: string;
 
-  @ApiPropertyOptional()
-  uom: string | null;
+  @ApiPropertyOptional({ description: 'Item unit of measure' })
+  uom?: string;
 
-  @ApiProperty()
-  price: number;
+  @ApiProperty({ description: 'Discount percentage', example: 10 })
+  discountPer: number;
 
-  @ApiPropertyOptional()
-  discountPct: number | null;
-
-  @ApiPropertyOptional()
-  startDate: string | null;
-
-  @ApiPropertyOptional()
-  endDate: string | null;
-
-  @ApiPropertyOptional()
-  customerNo: string | null;
+  @ApiProperty({ description: 'Created timestamp' })
+  createdAt: string;
 }

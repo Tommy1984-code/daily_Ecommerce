@@ -13,7 +13,7 @@ import {
 
 interface BrandCheckItem {
   id: string;
-  code: string;
+  brandId: string;
   titleEn: string;
   titleAm: string;
   checked: boolean;
@@ -62,7 +62,7 @@ export default function FeaturedCategoriesAdd() {
       setBrands(
         res.data.map((b: Brand) => ({
           id: b.id,
-          code: b.code,
+          brandId: b.brandId,
           titleEn: b.titleEn,
           titleAm: b.titleAm,
           checked: false,
@@ -87,7 +87,7 @@ export default function FeaturedCategoriesAdd() {
     try {
       const brandIds = brands.filter((b) => b.checked).map((b) => b.id);
       await createFeaturedCategory({
-        productGroupId: selectedGroupId,
+        productId: selectedGroupId,
         featuredImage: bannerUrl || undefined,
         brandIds,
       });

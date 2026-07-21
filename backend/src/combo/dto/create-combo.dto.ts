@@ -5,7 +5,7 @@ import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Min, ValidateNested
 export class CreateComboLineDto {
   @ApiProperty()
   @IsString()
-  navItemNo: string;
+  itemId: string;
 
   @ApiProperty()
   @IsString()
@@ -20,13 +20,13 @@ export class CreateComboLineDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  salesUom?: string;
+  uom?: string;
 }
 
 export class CreateComboDto {
   @ApiProperty()
   @IsString()
-  navItemNo: string;
+  itemId: string;
 
   @ApiProperty()
   @Type(() => Number)

@@ -4,6 +4,9 @@ export class CategoryResponseDto {
   @ApiProperty({ description: 'Category unique identifier', example: '550e8400-e29b-41d4-a716-446655440000' })
   id: string;
 
+  @ApiProperty({ description: 'NAV category ID', example: 'CAT-001' })
+  categoryId: string;
+
   @ApiProperty({ description: 'Category name in English', example: 'Dairy Products' })
   titleEn: string;
 

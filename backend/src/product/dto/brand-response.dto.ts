@@ -4,14 +4,17 @@ export class BrandResponseDto {
   @ApiProperty({ description: 'Brand unique identifier', example: '550e8400-e29b-41d4-a716-446655440002' })
   id: string;
 
+  @ApiProperty({ description: 'NAV brand ID', example: 'BR-001' })
+  brandId: string;
+
   @ApiProperty({ description: 'Brand name in English', example: 'Family' })
   titleEn: string;
 
   @ApiProperty({ description: 'Brand name in Amharic', example: 'ፋሚሊ' })
   titleAm: string;
 
-  @ApiProperty({ description: 'Product group ID this brand belongs to', example: '550e8400-e29b-41d4-a716-446655440001' })
-  productGroupId: string;
+  @ApiProperty({ description: 'Product ID this brand belongs to', example: '550e8400-e29b-41d4-a716-446655440001' })
+  productId: string;
 
   @ApiProperty({ description: 'Parent product group name in English', example: 'Milk' })
   productGroupTitleEn: string;
