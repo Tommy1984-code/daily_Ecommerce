@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, ParseIntPipe } from '@nestjs/common';
 import {
   ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags,
   ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse,
@@ -41,7 +41,7 @@ export class TopItemController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Top item not found' })
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.topItem.remove(id);
   }
 }

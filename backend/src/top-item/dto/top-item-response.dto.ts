@@ -2,10 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TopItemResponseDto {
   @ApiProperty()
-  id: string;
+  id: number;
 
   @ApiProperty()
-  itemId: string;
+  itemId: number;
 
   @ApiProperty()
   titleEn: string;
@@ -15,7 +15,4 @@ export class TopItemResponseDto {
 
   @ApiPropertyOptional()
   image: string | null;
-
-  @ApiProperty()
-  createdAt: string;
 }

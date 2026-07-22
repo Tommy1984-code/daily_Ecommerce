@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class BrandFeaturedDto {
   @ApiProperty()
-  id: string;
+  id: number;
 
   @ApiProperty()
   brandId: string;
@@ -12,14 +12,11 @@ export class BrandFeaturedDto {
 
   @ApiProperty()
   titleAm: string;
-
-  @ApiProperty()
-  featured: boolean;
 }
 
 export class FeaturedCategoryResponseDto {
   @ApiProperty()
-  id: string;
+  id: number;
 
   @ApiProperty()
   productId: string;
@@ -32,9 +29,6 @@ export class FeaturedCategoryResponseDto {
 
   @ApiPropertyOptional()
   image: string | null;
-
-  @ApiPropertyOptional()
-  featuredImage: string | null;
 
   @ApiProperty()
   brandCount: number;

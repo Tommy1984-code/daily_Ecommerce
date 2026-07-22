@@ -27,7 +27,7 @@ export class PriceService {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+
         include: { item: { select: { titleEn: true, titleAm: true } } },
       }),
       this.prisma.itemPrice.count({ where }),
@@ -40,7 +40,6 @@ export class PriceService {
         itemId: p.itemId,
         titleEn: p.item.titleEn,
         titleAm: p.item.titleAm,
-        branchId: p.branchId,
         uom: p.uom,
         price: Number(p.price),
         startDate: p.startDate?.toISOString() ?? null,
@@ -53,7 +52,7 @@ export class PriceService {
     );
   }
 
-  async findOne(id: string): Promise<PriceResponseDto> {
+  async findOne(id: number): Promise<PriceResponseDto> {
 const price = await this.prisma.itemPrice.findUnique({
       where: { id },
       include: { item: { select: { titleEn: true, titleAm: true } } },
@@ -65,7 +64,7 @@ const price = await this.prisma.itemPrice.findUnique({
       itemId: price.itemId,
       titleEn: price.item.titleEn,
       titleAm: price.item.titleAm,
-      branchId: price.branchId,
+
       uom: price.uom,
       price: Number(price.price),
       startDate: price.startDate?.toISOString() ?? null,

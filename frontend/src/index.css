@@ -195,19 +195,19 @@ layer(base);
 }
 
 @utility menu-item-active {
-  @apply bg-[#1E293B] text-[#3b82f6];
+  @apply bg-[#1E293B] text-[#3b82f6] dark:bg-brand-500/[0.12] dark:text-brand-400;
 }
 
 @utility menu-item-inactive {
-  @apply text-gray-300 hover:bg-[#1E293B] hover:text-white;
+  @apply text-gray-300 hover:bg-[#1E293B] hover:text-white dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
 }
 
 @utility menu-item-icon {
-  @apply text-gray-400 group-hover:text-white;
+  @apply text-gray-400 group-hover:text-white dark:text-gray-400;
 }
 
 @utility menu-item-icon-active {
-  @apply text-[#3b82f6];
+  @apply text-[#3b82f6] dark:text-brand-400;
 }
 
 @utility menu-item-icon-size {
@@ -217,7 +217,7 @@ layer(base);
 }
 
 @utility menu-item-icon-inactive {
-  @apply text-gray-400 group-hover:text-white;
+  @apply text-gray-400 group-hover:text-white dark:text-gray-400 dark:group-hover:text-gray-300;
 }
 
 @utility menu-item-arrow {
@@ -225,11 +225,11 @@ layer(base);
 }
 
 @utility menu-item-arrow-active {
-  @apply rotate-180 text-[#3b82f6];
+  @apply rotate-180 text-[#3b82f6] dark:text-brand-400;
 }
 
 @utility menu-item-arrow-inactive {
-  @apply text-gray-400 group-hover:text-white;
+  @apply text-gray-400 group-hover:text-white dark:text-gray-400 dark:group-hover:text-gray-300;
 }
 
 @utility menu-dropdown-item {
@@ -237,11 +237,11 @@ layer(base);
 }
 
 @utility menu-dropdown-item-active {
-  @apply bg-[#1E293B] text-[#3b82f6];
+  @apply bg-[#1E293B] text-[#3b82f6] dark:bg-brand-500/[0.12] dark:text-brand-400;
 }
 
 @utility menu-dropdown-item-inactive {
-  @apply text-gray-300 hover:bg-[#1E293B] hover:text-white;
+  @apply text-gray-300 hover:bg-[#1E293B] hover:text-white dark:text-gray-300 dark:hover:bg-white/5;
 }
 
 @utility menu-dropdown-badge {

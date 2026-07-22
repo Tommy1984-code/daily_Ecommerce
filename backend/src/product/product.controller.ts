@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Patch, Body, Delete, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, Patch, Body, Delete, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Multer } from 'multer';
 import {
@@ -80,7 +80,7 @@ export class ProductController {
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Category not found' })
   async getProductGroups(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Query() query: ProductQueryDto,
   ): Promise<PaginatedResponse<ProductGroupResponseDto>> {
     return this.product.findProductGroupsByCategory(id, query.page, query.limit, query.q);
@@ -96,7 +96,7 @@ export class ProductController {
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Product group not found' })
   async getBrands(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Query() query: ProductQueryDto,
   ): Promise<PaginatedResponse<BrandResponseDto>> {
     return this.product.findBrandsByProductGroup(id, query.page, query.limit, query.q);
@@ -156,7 +156,7 @@ export class ProductController {
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Category not found' })
   async updateCategoryImage(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateImageDto,
   ): Promise<CategoryResponseDto> {
     return this.product.updateCategoryImage(id, dto.image);
@@ -170,7 +170,7 @@ export class ProductController {
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Product group not found' })
   async updateProductGroupImage(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateImageDto,
   ): Promise<ProductGroupResponseDto> {
     return this.product.updateProductGroupImage(id, dto.image);
@@ -184,7 +184,7 @@ export class ProductController {
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Brand not found' })
   async updateBrandImage(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateImageDto,
   ): Promise<BrandResponseDto> {
     return this.product.updateBrandImage(id, dto.image);
@@ -197,7 +197,7 @@ export class ProductController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Category not found' })
-  async deleteCategory(@Param('id') id: string): Promise<void> {
+  async deleteCategory(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.product.deleteCategory(id);
   }
 
@@ -208,7 +208,7 @@ export class ProductController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Product group not found' })
-  async deleteProductGroup(@Param('id') id: string): Promise<void> {
+  async deleteProductGroup(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.product.deleteProductGroup(id);
   }
 
@@ -219,7 +219,7 @@ export class ProductController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Brand not found' })
-  async deleteBrand(@Param('id') id: string): Promise<void> {
+  async deleteBrand(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.product.deleteBrand(id);
   }
 

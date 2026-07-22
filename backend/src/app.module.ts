@@ -16,6 +16,7 @@ import { ComboModule } from './combo/combo.module';
 import { TopItemModule } from './top-item/top-item.module';
 import { LandMarkPriceModule } from './land-mark-price/land-mark-price.module';
 import { FeaturedCategoryModule } from './featured-category/featured-category.module';
+import { UserModule } from './user/user.module';
 import { AccessGuard } from './auth/guards/access.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -53,6 +54,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     TopItemModule,
     LandMarkPriceModule,
     FeaturedCategoryModule,
+    UserModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AccessGuard },

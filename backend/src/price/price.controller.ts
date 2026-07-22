@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseIntPipe } from '@nestjs/common';
 import {
   ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags,
   ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse,
@@ -32,7 +32,7 @@ export class PriceController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Price not found' })
-  async findOne(@Param('id') id: string): Promise<PriceResponseDto> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<PriceResponseDto> {
     return this.price.findOne(id);
   }
 }

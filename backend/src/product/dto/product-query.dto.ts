@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min, Max, IsUUID, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min, Max, MinLength } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
 
 export class ProductQueryDto extends PaginationDto {
@@ -18,18 +18,21 @@ export class ItemsQueryDto extends PaginationDto {
   @MinLength(1)
   q?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by Category ID', example: 'uuid' })
+  @ApiPropertyOptional({ description: 'Filter by Category ID', example: 1 })
   @IsOptional()
-  @IsUUID()
-  categoryId?: string;
+  @Type(() => Number)
+  @IsInt()
+  categoryId?: number;
 
-  @ApiPropertyOptional({ description: 'Filter by Product ID', example: 'uuid' })
+  @ApiPropertyOptional({ description: 'Filter by Product ID', example: 1 })
   @IsOptional()
-  @IsUUID()
-  productId?: string;
+  @Type(() => Number)
+  @IsInt()
+  productId?: number;
 
-  @ApiPropertyOptional({ description: 'Filter by Brand ID', example: 'uuid' })
+  @ApiPropertyOptional({ description: 'Filter by Brand ID', example: 1 })
   @IsOptional()
-  @IsUUID()
-  brandId?: string;
+  @Type(() => Number)
+  @IsInt()
+  brandId?: number;
 }

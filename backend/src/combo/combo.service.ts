@@ -19,7 +19,7 @@ export class ComboService {
       this.prisma.comboHeader.findMany({
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { id: 'desc' },
         include: {
           item: { select: { titleEn: true } },
           _count: { select: { lines: true } },
@@ -30,24 +30,23 @@ export class ComboService {
 
     return paginate(
       data.map((h) => ({
-        id: h.id,
-        itemId: h.itemId,
-        titleEn: h.item.titleEn,
+        id: h.id.toString(),
+        itemId: h.itemId.toString(),
+        titleEn: (h as any).item.titleEn,
         description: h.description,
         price: Number(h.price),
         active: h.active,
-        lineCount: h._count.lines,
-        createdAt: h.createdAt.toISOString(),
+        lineCount: (h as any)._count.lines,
       })),
       total,
       page,
       limit,
-    );
+    ) as unknown as PaginatedResponse<ComboHeaderResponseDto>;
   }
 
   async findOne(id: string): Promise<ComboHeaderResponseDto> {
     const header = await this.prisma.comboHeader.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: {
         item: { select: { titleEn: true } },
         lines: {
@@ -58,40 +57,39 @@ export class ComboService {
     });
     if (!header) throw ApiError.NotFound('Combo not found', 'COMBO_NOT_FOUND');
 
+    const h = header as any;
     return {
-      id: header.id,
-      itemId: header.itemId,
-      titleEn: header.item.titleEn,
-      description: header.description,
-      price: Number(header.price),
-      active: header.active,
-      lineCount: header.lines.length,
-      lines: header.lines.map((l) => ({
-        id: l.id,
-        headerNumber: l.headerNumber,
-        itemId: l.itemId,
+      id: h.id.toString(),
+      itemId: h.itemId.toString(),
+      titleEn: h.item.titleEn,
+      description: h.description,
+      price: Number(h.price),
+      active: h.active,
+      lineCount: h.lines.length,
+      lines: h.lines.map((l: any) => ({
+        id: l.id.toString(),
+        headerNumber: l.headerNumber.toString(),
+        itemId: l.itemId.toString(),
         titleEn: l.item.titleEn,
         itemDescription: l.itemDescription,
         quantity: Number(l.quantity),
         uom: l.uom,
       })),
-      createdAt: header.createdAt.toISOString(),
-    };
+    } as unknown as ComboHeaderResponseDto;
   }
 
   async create(dto: CreateComboDto): Promise<ComboHeaderResponseDto> {
     const header = await this.prisma.$transaction(async (tx) => {
       const created = await tx.comboHeader.create({
         data: {
-          itemId: dto.itemId,
+          itemId: Number(dto.itemId),
           price: dto.price,
           active: dto.active ?? true,
           lines: {
             create: dto.lines.map((line) => ({
-              itemId: line.itemId,
+              itemId: Number(line.itemId),
               itemDescription: line.itemDescription,
               quantity: line.quantity,
-              uom: line.uom,
             })),
           },
         },
@@ -105,29 +103,29 @@ export class ComboService {
       return created;
     });
 
+    const h = header as any;
     return {
-      id: header.id,
-      itemId: header.itemId,
-      titleEn: header.item.titleEn,
-      description: header.description,
-      price: Number(header.price),
-      active: header.active,
-      lineCount: header.lines.length,
-      lines: header.lines.map((l) => ({
-        id: l.id,
-        headerNumber: l.headerNumber,
-        itemId: l.itemId,
+      id: h.id.toString(),
+      itemId: h.itemId.toString(),
+      titleEn: h.item.titleEn,
+      description: h.description,
+      price: Number(h.price),
+      active: h.active,
+      lineCount: h.lines.length,
+      lines: h.lines.map((l: any) => ({
+        id: l.id.toString(),
+        headerNumber: l.headerNumber.toString(),
+        itemId: l.itemId.toString(),
         titleEn: l.item.titleEn,
         itemDescription: l.itemDescription,
         quantity: Number(l.quantity),
         uom: l.uom,
       })),
-      createdAt: header.createdAt.toISOString(),
-    };
+    } as unknown as ComboHeaderResponseDto;
   }
 
   async update(id: string, dto: UpdateComboDto): Promise<ComboHeaderResponseDto> {
-    const existing = await this.prisma.comboHeader.findUnique({ where: { id } });
+    const existing = await this.prisma.comboHeader.findUnique({ where: { id: Number(id) } });
     if (!existing) throw ApiError.NotFound('Combo not found', 'COMBO_NOT_FOUND');
 
     const data: Prisma.ComboHeaderUpdateInput = {};
@@ -139,16 +137,15 @@ export class ComboService {
       data.lines = {
         deleteMany: {},
         create: dto.lines.map((line) => ({
-          itemId: line.itemId,
+          itemId: Number(line.itemId),
           itemDescription: line.itemDescription,
           quantity: line.quantity,
-          uom: line.uom,
         })),
       };
     }
 
     const header = await this.prisma.comboHeader.update({
-      where: { id },
+      where: { id: Number(id) },
       data,
       include: {
         item: { select: { titleEn: true } },
@@ -159,31 +156,31 @@ export class ComboService {
       },
     });
 
+    const h = header as any;
     return {
-      id: header.id,
-      itemId: header.itemId,
-      titleEn: header.item.titleEn,
-      description: header.description,
-      price: Number(header.price),
-      active: header.active,
-      lineCount: header.lines.length,
-      lines: header.lines.map((l) => ({
-        id: l.id,
-        headerNumber: l.headerNumber,
-        itemId: l.itemId,
+      id: h.id.toString(),
+      itemId: h.itemId.toString(),
+      titleEn: h.item.titleEn,
+      description: h.description,
+      price: Number(h.price),
+      active: h.active,
+      lineCount: h.lines.length,
+      lines: h.lines.map((l: any) => ({
+        id: l.id.toString(),
+        headerNumber: l.headerNumber.toString(),
+        itemId: l.itemId.toString(),
         titleEn: l.item.titleEn,
         itemDescription: l.itemDescription,
         quantity: Number(l.quantity),
         uom: l.uom,
       })),
-      createdAt: header.createdAt.toISOString(),
-    };
+    } as unknown as ComboHeaderResponseDto;
   }
 
   async remove(id: string): Promise<void> {
-    const existing = await this.prisma.comboHeader.findUnique({ where: { id } });
+    const existing = await this.prisma.comboHeader.findUnique({ where: { id: Number(id) } });
     if (!existing) throw ApiError.NotFound('Combo not found', 'COMBO_NOT_FOUND');
 
-    await this.prisma.comboHeader.delete({ where: { id } });
+    await this.prisma.comboHeader.delete({ where: { id: Number(id) } });
   }
 }

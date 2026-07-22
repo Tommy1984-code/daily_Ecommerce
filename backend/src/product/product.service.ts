@@ -43,7 +43,6 @@ export class ProductService {
         titleAm: c.titleAm,
         image: c.image,
         productGroupCount: c._count.productGroups,
-        syncedAt: c.syncedAt.toISOString(),
       })),
       total,
       page,
@@ -85,7 +84,6 @@ export class ProductService {
         categoryTitleAm: g.category.titleAm,
         image: g.image,
         brandCount: g._count.brands,
-        syncedAt: g.syncedAt.toISOString(),
       })),
       total,
       page,
@@ -94,7 +92,7 @@ export class ProductService {
   }
 
   async findProductGroupsByCategory(
-    categoryId: string,
+    categoryId: number,
     page = 1,
     limit = 20,
     q?: string,
@@ -132,7 +130,6 @@ export class ProductService {
         categoryTitleAm: g.category.titleAm,
         image: g.image,
         brandCount: g._count.brands,
-        syncedAt: g.syncedAt.toISOString(),
       })),
       total,
       page,
@@ -178,7 +175,6 @@ export class ProductService {
         categoryTitleAm: b.productGroup.category.titleAm,
         image: b.image,
         itemCount: b._count.items,
-        syncedAt: b.syncedAt.toISOString(),
       })),
       total,
       page,
@@ -187,7 +183,7 @@ export class ProductService {
   }
 
   async findBrandsByProductGroup(
-    productId: string,
+    productId: number,
     page = 1,
     limit = 20,
     q?: string,
@@ -229,7 +225,6 @@ export class ProductService {
         categoryTitleAm: b.productGroup.category.titleAm,
         image: b.image,
         itemCount: b._count.items,
-        syncedAt: b.syncedAt.toISOString(),
       })),
       total,
       page,
@@ -270,7 +265,7 @@ export class ProductService {
             },
             take: 1,
             orderBy: { endDate: { sort: 'desc', nulls: 'last' } },
-            select: { priceId: true, branchId: true, uom: true, price: true, startDate: true, endDate: true, customerNo: true },
+          select: { priceId: true, uom: true, price: true, startDate: true, endDate: true, customerNo: true },
           },
         },
       }),
@@ -288,23 +283,17 @@ export class ProductService {
         image: item.image,
         specificationsEn: item.specificationsEn,
         specificationsAm: item.specificationsAm,
-        salesUom: item.prices[0]?.uom ?? item.salesUom,
-        status: item.status,
         categoryTitleEn: item.category.titleEn,
         productGroupTitleEn: item.productGroup.titleEn,
         brandTitleEn: item.brand.titleEn,
         prices: item.prices.map((p) => ({
           priceId: p.priceId,
-          branchId: p.branchId,
           uom: p.uom,
           price: Number(p.price),
           startDate: p.startDate?.toISOString() ?? null,
           endDate: p.endDate?.toISOString() ?? null,
           customerNo: p.customerNo,
         })),
-        stockSnapshots: [],
-        syncedAt: item.syncedAt.toISOString(),
-        stalenessNote: this.buildStalenessNote(item.syncedAt),
       })),
       total,
       page,
@@ -313,19 +302,14 @@ export class ProductService {
   }
 
   async findItemByItemId(itemId: string): Promise<ItemResponseDto | null> {
-    const item = await this.prisma.item.findUnique({
+    const item = await this.prisma.item.findFirst({
       where: { itemId },
       include: {
         category: { select: { titleEn: true } },
         productGroup: { select: { titleEn: true } },
         brand: { select: { titleEn: true } },
         prices: {
-          select: { priceId: true, branchId: true, uom: true, price: true, startDate: true, endDate: true, customerNo: true },
-          orderBy: { branchId: 'asc' },
-        },
-        stockSnapshots: {
-          select: { branchId: true, qty: true, syncedAt: true },
-          orderBy: { branchId: 'asc' },
+          select: { priceId: true, uom: true, price: true, startDate: true, endDate: true, customerNo: true },
         },
       },
     });
@@ -342,27 +326,17 @@ export class ProductService {
       image: item.image,
       specificationsEn: item.specificationsEn,
       specificationsAm: item.specificationsAm,
-      salesUom: item.salesUom,
-      status: item.status,
       categoryTitleEn: item.category.titleEn,
       productGroupTitleEn: item.productGroup.titleEn,
       brandTitleEn: item.brand.titleEn,
       prices: item.prices.map((p) => ({
         priceId: p.priceId,
-        branchId: p.branchId,
         uom: p.uom,
         price: Number(p.price),
         startDate: p.startDate?.toISOString() ?? null,
         endDate: p.endDate?.toISOString() ?? null,
         customerNo: p.customerNo,
       })),
-      stockSnapshots: item.stockSnapshots.map((s) => ({
-        branchId: s.branchId,
-        qty: s.qty,
-        syncedAt: s.syncedAt.toISOString(),
-      })),
-      syncedAt: item.syncedAt.toISOString(),
-      stalenessNote: this.buildStalenessNote(item.syncedAt),
     };
   }
 
@@ -370,7 +344,7 @@ export class ProductService {
     const minScore = 0.2;
 
     const searchResults = await this.prisma.$queryRaw<
-      Array<{ nav_item_no: string; title_en: string; title_am: string; image: string | null; uom: string | null; category_title_en: string; product_group_title_en: string; brand_title_en: string; synced_at: Date; price: number | null; similarity: number }>
+      Array<{ nav_item_no: string; title_en: string; title_am: string; image: string | null; uom: string | null; category_title_en: string; product_group_title_en: string; brand_title_en: string; price: number | null; similarity: number }>
     >`
       SELECT
         i.nav_item_no,
@@ -381,7 +355,6 @@ export class ProductService {
         c.title_en AS category_title_en,
         pg.title_en AS product_group_title_en,
         b.title_en AS brand_title_en,
-        i.synced_at,
         ip.price,
         GREATEST(
           similarity(i.title_en, ${q}),
@@ -419,11 +392,9 @@ export class ProductService {
         titleAm: r.title_am,
         price: r.price ? Number(r.price) : null,
         image: r.image,
-        salesUom: r.uom,
         categoryTitleEn: r.category_title_en,
         productGroupTitleEn: r.product_group_title_en,
         brandTitleEn: r.brand_title_en,
-        syncedAt: r.synced_at.toISOString(),
       })),
       total,
       page,
@@ -431,16 +402,7 @@ export class ProductService {
     );
   }
 
-  private buildStalenessNote(syncedAt: Date): string {
-    const minutes = Math.floor((Date.now() - syncedAt.getTime()) / 60000);
-    if (minutes < 1) return 'Just updated';
-    if (minutes < 60) return `Updated ${minutes} minutes ago — confirm with branch`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `Updated ${hours} hour${hours > 1 ? 's' : ''} ago — confirm with branch`;
-    return `Updated ${Math.floor(hours / 24)} days ago — may be outdated`;
-  }
-
-  async updateCategoryImage(id: string, image: string | null): Promise<CategoryResponseDto> {
+  async updateCategoryImage(id: number, image: string | null): Promise<CategoryResponseDto> {
     const category = await this.prisma.category.update({
       where: { id },
       data: { image },
@@ -452,11 +414,10 @@ export class ProductService {
       titleAm: category.titleAm,
       image: category.image,
       productGroupCount: 0,
-      syncedAt: category.syncedAt.toISOString(),
     };
   }
 
-  async updateProductGroupImage(id: string, image: string | null): Promise<ProductGroupResponseDto> {
+  async updateProductGroupImage(id: number, image: string | null): Promise<ProductGroupResponseDto> {
     const group = await this.prisma.productGroup.update({
       where: { id },
       data: { image },
@@ -472,11 +433,10 @@ export class ProductService {
       categoryTitleAm: group.category.titleAm,
       image: group.image,
       brandCount: 0,
-      syncedAt: group.syncedAt.toISOString(),
     };
   }
 
-  async updateBrandImage(id: string, image: string | null): Promise<BrandResponseDto> {
+  async updateBrandImage(id: number, image: string | null): Promise<BrandResponseDto> {
     const brand = await this.prisma.brand.update({
       where: { id },
       data: { image },
@@ -498,23 +458,25 @@ export class ProductService {
       categoryTitleAm: brand.productGroup.category.titleAm,
       image: brand.image,
       itemCount: 0,
-      syncedAt: brand.syncedAt.toISOString(),
     };
   }
 
-  async deleteCategory(id: string): Promise<void> {
+  async deleteCategory(id: number): Promise<void> {
     await this.prisma.category.delete({ where: { id } });
   }
 
-  async deleteProductGroup(id: string): Promise<void> {
+  async deleteProductGroup(id: number): Promise<void> {
     await this.prisma.productGroup.delete({ where: { id } });
   }
 
-  async deleteBrand(id: string): Promise<void> {
+  async deleteBrand(id: number): Promise<void> {
     await this.prisma.brand.delete({ where: { id } });
   }
 
   async updateItem(itemId: string, dto: UpdateItemDto): Promise<ItemResponseDto | null> {
+    const item = await this.prisma.item.findFirst({ where: { itemId }, select: { id: true } });
+    if (!item) return null;
+
     const data: Record<string, string> = {};
     if (dto.image !== undefined) data.image = dto.image;
     if (dto.specificationsEn !== undefined) data.specificationsEn = dto.specificationsEn;
@@ -524,7 +486,7 @@ export class ProductService {
 
     try {
       await this.prisma.item.update({
-        where: { itemId },
+        where: { id: item.id },
         data,
       });
     } catch {
@@ -535,9 +497,10 @@ export class ProductService {
   }
 
   async deleteItem(itemId: string): Promise<void> {
-    await this.prisma.itemPrice.deleteMany({ where: { itemId } });
-    await this.prisma.itemStockSnapshot.deleteMany({ where: { itemId } });
-    await this.prisma.item.delete({ where: { itemId } });
+    const item = await this.prisma.item.findFirst({ where: { itemId }, select: { id: true } });
+    if (!item) return;
+    await this.prisma.itemPrice.deleteMany({ where: { itemId: item.id } });
+    await this.prisma.item.delete({ where: { id: item.id } });
   }
 
   async importItems(file: Multer.File): Promise<{ imported: number; errors: string[] }> {
@@ -563,43 +526,53 @@ export class ProductService {
       headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
 
       try {
-        const category = await this.prisma.category.findUnique({ where: { id: row.category_id } });
-        const productGroup = await this.prisma.productGroup.findUnique({ where: { id: row.product_group_id } });
-        const brand = await this.prisma.brand.findUnique({ where: { id: row.brand_id } });
+        const categoryId = parseInt(row.category_id, 10);
+        const productGroupId = parseInt(row.product_group_id, 10);
+        const brandId = parseInt(row.brand_id, 10);
+
+        if (isNaN(categoryId)) throw new Error(`Invalid category ID: ${row.category_id}`);
+        if (isNaN(productGroupId)) throw new Error(`Invalid product group ID: ${row.product_group_id}`);
+        if (isNaN(brandId)) throw new Error(`Invalid brand ID: ${row.brand_id}`);
+
+        const category = await this.prisma.category.findUnique({ where: { id: categoryId } });
+        const productGroup = await this.prisma.productGroup.findUnique({ where: { id: productGroupId } });
+        const brand = await this.prisma.brand.findUnique({ where: { id: brandId } });
 
         if (!category) throw new Error(`Category not found: ${row.category_id}`);
         if (!productGroup) throw new Error(`Product Group not found: ${row.product_group_id}`);
         if (!brand) throw new Error(`Brand not found: ${row.brand_id}`);
         if (!row.title_en) throw new Error('Title EN is required');
 
-        await this.prisma.item.upsert({
-          where: { itemId: row.item_id },
-          update: {
-            titleEn: row.title_en,
-            titleAm: row.title_am || undefined,
-            categoryId: row.category_id,
-            productId: row.product_group_id,
-            brandId: row.brand_id,
-            image: row.image || undefined,
-            specificationsEn: row.specifications_en || undefined,
-            specificationsAm: row.specifications_am || undefined,
-            salesUom: row.uom || undefined,
-            status: row.status ? parseInt(row.status, 10) : 1,
-          },
-          create: {
-            itemId: row.item_id,
-            titleEn: row.title_en,
-            titleAm: row.title_am || '',
-            categoryId: row.category_id,
-            productId: row.product_group_id,
-            brandId: row.brand_id,
-            image: row.image || undefined,
-            specificationsEn: row.specifications_en || undefined,
-            specificationsAm: row.specifications_am || undefined,
-            salesUom: row.uom || undefined,
-            status: row.status ? parseInt(row.status, 10) : 1,
-          },
-        });
+        const existingItem = await this.prisma.item.findFirst({ where: { itemId: row.item_id } });
+        if (existingItem) {
+          await this.prisma.item.update({
+            where: { id: existingItem.id },
+            data: {
+              titleEn: row.title_en,
+              titleAm: row.title_am || undefined,
+              categoryId,
+              productId: productGroupId,
+              brandId,
+              image: row.image || undefined,
+              specificationsEn: row.specifications_en || undefined,
+              specificationsAm: row.specifications_am || undefined,
+            },
+          });
+        } else {
+          await this.prisma.item.create({
+            data: {
+              itemId: row.item_id,
+              titleEn: row.title_en,
+              titleAm: row.title_am || '',
+              categoryId,
+              productId: productGroupId,
+              brandId,
+              image: row.image || undefined,
+              specificationsEn: row.specifications_en || undefined,
+              specificationsAm: row.specifications_am || undefined,
+            },
+          });
+        }
         imported++;
       } catch (err) {
         errors.push(`Row ${i + 1}: ${err instanceof Error ? err.message : 'Unknown error'}`);

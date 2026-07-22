@@ -22,42 +22,41 @@ export class DiscountService {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: { item: { select: { titleEn: true, titleAm: true, salesUom: true } } },
+        orderBy: { id: 'desc' },
+        include: { item: { select: { titleEn: true, titleAm: true } } },
       }),
       this.prisma.priceDiscount.count({ where }),
     ]);
 
     return paginate(
-      data.map((d) => ({
-        id: d.id,
-        itemId: d.itemId,
+      data.map((d: any) => ({
+        id: d.id.toString(),
+        itemId: d.itemId.toString(),
         titleEn: d.item.titleEn,
         titleAm: d.item.titleAm || undefined,
-        uom: d.item.salesUom || undefined,
+        uom: d.uom || undefined,
         discountPer: Number(d.discountPer),
-        createdAt: d.createdAt.toISOString(),
       })),
       total,
       page,
       limit,
-    );
+    ) as unknown as PaginatedResponse<DiscountResponseDto>;
   }
 
   async findOne(id: string): Promise<DiscountResponseDto> {
     const discount = await this.prisma.priceDiscount.findUnique({
-      where: { id },
-      include: { item: { select: { titleEn: true, titleAm: true, salesUom: true } } },
+      where: { id: Number(id) },
+      include: { item: { select: { titleEn: true, titleAm: true } } },
     });
     if (!discount) throw ApiError.NotFound('Discount not found', 'DISCOUNT_NOT_FOUND');
+    const d = discount as any;
     return {
-      id: discount.id,
-      itemId: discount.itemId,
-      titleEn: discount.item.titleEn,
-      titleAm: discount.item.titleAm || undefined,
-      uom: discount.item.salesUom || undefined,
-      discountPer: Number(discount.discountPer),
-      createdAt: discount.createdAt.toISOString(),
-    };
+      id: d.id.toString(),
+      itemId: d.itemId.toString(),
+      titleEn: d.item.titleEn,
+      titleAm: d.item.titleAm || undefined,
+      uom: d.uom || undefined,
+      discountPer: Number(d.discountPer),
+    } as unknown as DiscountResponseDto;
   }
 }

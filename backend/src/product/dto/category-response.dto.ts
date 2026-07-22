@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CategoryResponseDto {
-  @ApiProperty({ description: 'Category unique identifier', example: '550e8400-e29b-41d4-a716-446655440000' })
-  id: string;
+  @ApiProperty({ description: 'Category unique identifier', example: 1 })
+  id: number;
 
   @ApiProperty({ description: 'NAV category ID', example: 'CAT-001' })
   categoryId: string;
@@ -18,7 +18,4 @@ export class CategoryResponseDto {
 
   @ApiProperty({ description: 'Number of product groups in this category', example: 3 })
   productGroupCount: number;
-
-  @ApiProperty({ description: 'Last sync timestamp from NAV', example: '2026-07-15T10:00:00.000Z' })
-  syncedAt: string;
 }

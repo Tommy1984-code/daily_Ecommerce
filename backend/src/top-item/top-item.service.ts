@@ -10,7 +10,7 @@ export class TopItemService {
 
   async findAll(): Promise<TopItemResponseDto[]> {
     const items = await this.prisma.topItem.findMany({
-      orderBy: { createdAt: 'desc' },
+
       include: { item: { select: { titleEn: true, titleAm: true, image: true } } },
     });
 
@@ -20,7 +20,6 @@ export class TopItemService {
       titleEn: t.item.titleEn,
       titleAm: t.item.titleAm,
       image: t.item.image,
-      createdAt: t.createdAt.toISOString(),
     }));
   }
 
@@ -36,11 +35,10 @@ export class TopItemService {
       titleEn: topItem.item.titleEn,
       titleAm: topItem.item.titleAm,
       image: topItem.item.image,
-      createdAt: topItem.createdAt.toISOString(),
     };
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: number): Promise<void> {
     const existing = await this.prisma.topItem.findUnique({ where: { id } });
     if (!existing) throw ApiError.NotFound('Top item not found', 'TOP_ITEM_NOT_FOUND');
 

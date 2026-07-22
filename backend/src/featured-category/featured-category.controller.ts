@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags,
   ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse,
@@ -44,12 +44,12 @@ export class FeaturedCategoryController {
 
   @Patch(':id/banner')
   @RBAC('product', 'write')
-  @ApiOperation({ summary: 'Update banner', description: 'Updates the featuredImage for a product group.' })
+  @ApiOperation({ summary: 'Update banner', description: 'Updates the banner image for a product group.' })
   @ApiOkResponse({ description: 'Banner updated' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Product group not found' })
-  async updateBanner(@Param('id') id: string, @Body() dto: UpdateBannerDto): Promise<FeaturedCategoryResponseDto> {
+  async updateBanner(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateBannerDto): Promise<FeaturedCategoryResponseDto> {
     return this.featured.updateBanner(id, dto.featuredImage);
   }
 
@@ -60,8 +60,8 @@ export class FeaturedCategoryController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Brand not found' })
-  async toggleBrandFeatured(@Param('id') id: string, @Body() dto: ToggleBrandFeaturedDto): Promise<FeaturedCategoryResponseDto> {
-    return this.featured.toggleBrandFeatured(id, dto.brandId, dto.featured);
+  async toggleBrandFeatured(@Param('id', ParseIntPipe) id: number, @Body() dto: ToggleBrandFeaturedDto): Promise<FeaturedCategoryResponseDto> {
+    return this.featured.toggleBrandFeatured(id, dto.brandId);
   }
 
   @Patch(':id/toggle')
@@ -71,7 +71,7 @@ export class FeaturedCategoryController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid Bearer token' })
   @ApiForbiddenResponse({ description: 'Insufficient permissions' })
   @ApiNotFoundResponse({ description: 'Product group not found' })
-  async toggleFeatured(@Param('id') id: string): Promise<FeaturedCategoryResponseDto> {
+  async toggleFeatured(@Param('id', ParseIntPipe) id: number): Promise<FeaturedCategoryResponseDto> {
     return this.featured.toggleFeatured(id);
   }
 }

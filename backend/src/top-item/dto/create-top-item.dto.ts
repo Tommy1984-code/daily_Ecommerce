@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsInt } from 'class-validator';
 
 export class CreateTopItemDto {
   @ApiProperty()
-  @IsString()
-  itemId: string;
+  @Type(() => Number)
+  @IsInt()
+  itemId: number;
 }

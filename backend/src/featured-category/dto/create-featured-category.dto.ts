@@ -1,18 +1,15 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsArray, IsInt } from 'class-validator';
 
 export class CreateFeaturedCategoryDto {
   @ApiProperty()
-  @IsString()
-  productId: string;
+  @Type(() => Number)
+  @IsInt()
+  productId: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  featuredImage?: string;
-
-  @ApiProperty({ type: [String] })
+  @ApiProperty({ type: [Number] })
   @IsArray()
-  @IsString({ each: true })
-  brandIds: string[];
+  @IsInt({ each: true })
+  brandIds: number[];
 }

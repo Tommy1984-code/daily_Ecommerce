@@ -2,22 +2,19 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PriceResponseDto {
   @ApiProperty()
-  id: string;
+  id: number;
 
   @ApiPropertyOptional()
   priceId: string | null;
 
   @ApiProperty()
-  itemId: string;
+  itemId: number;
 
   @ApiProperty()
   titleEn: string;
 
   @ApiProperty()
   titleAm: string;
-
-  @ApiProperty()
-  branchId: string;
 
   @ApiPropertyOptional()
   uom: string | null;

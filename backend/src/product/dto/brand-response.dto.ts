@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class BrandResponseDto {
-  @ApiProperty({ description: 'Brand unique identifier', example: '550e8400-e29b-41d4-a716-446655440002' })
-  id: string;
+  @ApiProperty({ description: 'Brand unique identifier', example: 1 })
+  id: number;
 
   @ApiProperty({ description: 'NAV brand ID', example: 'BR-001' })
   brandId: string;
@@ -13,8 +13,8 @@ export class BrandResponseDto {
   @ApiProperty({ description: 'Brand name in Amharic', example: 'ፋሚሊ' })
   titleAm: string;
 
-  @ApiProperty({ description: 'Product ID this brand belongs to', example: '550e8400-e29b-41d4-a716-446655440001' })
-  productId: string;
+  @ApiProperty({ description: 'Product ID this brand belongs to', example: 1 })
+  productId: number;
 
   @ApiProperty({ description: 'Parent product group name in English', example: 'Milk' })
   productGroupTitleEn: string;
@@ -33,7 +33,4 @@ export class BrandResponseDto {
 
   @ApiProperty({ description: 'Number of items under this brand', example: 5 })
   itemCount: number;
-
-  @ApiProperty({ description: 'Last sync timestamp from NAV', example: '2026-07-15T10:00:00.000Z' })
-  syncedAt: string;
 }
