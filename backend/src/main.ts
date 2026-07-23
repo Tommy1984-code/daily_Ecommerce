@@ -1,3 +1,9 @@
+if (typeof globalThis.crypto?.randomUUID !== 'function') {
+  const nodeCrypto = require('crypto');
+  if (!globalThis.crypto) (globalThis as any).crypto = {};
+  globalThis.crypto.randomUUID = nodeCrypto.randomUUID.bind(nodeCrypto);
+}
+
 import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';

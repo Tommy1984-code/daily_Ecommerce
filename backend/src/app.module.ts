@@ -17,6 +17,10 @@ import { TopItemModule } from './top-item/top-item.module';
 import { LandMarkPriceModule } from './land-mark-price/land-mark-price.module';
 import { FeaturedCategoryModule } from './featured-category/featured-category.module';
 import { UserModule } from './user/user.module';
+import { OrdersModule } from './orders/orders.module';
+import { RidersModule } from './riders/riders.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 import { AccessGuard } from './auth/guards/access.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -55,6 +59,10 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     LandMarkPriceModule,
     FeaturedCategoryModule,
     UserModule,
+    OrdersModule,
+    RidersModule,
+    NotificationsModule,
+    SchedulerModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AccessGuard },

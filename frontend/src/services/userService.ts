@@ -32,6 +32,7 @@ export async function createUser(data: {
   email: string;
   name: string;
   role: string;
+  password: string;
 }): Promise<User> {
   const res = await api.post("/v1/user", data);
   return res.data;
@@ -39,7 +40,7 @@ export async function createUser(data: {
 
 export async function updateUser(
   id: string,
-  data: { name?: string; role?: string; isActive?: boolean },
+  data: { name?: string; role?: string; isActive?: boolean; password?: string },
 ): Promise<User> {
   const res = await api.patch(`/v1/user/${id}`, data);
   return res.data;

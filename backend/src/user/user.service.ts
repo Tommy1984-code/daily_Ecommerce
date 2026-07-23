@@ -19,7 +19,6 @@ const ROLE_KEY_MAP: Record<string, string> = {
   'Staff': 'STAFF',
 };
 
-const DEFAULT_PASSWORD = 'Default@123';
 
 @Injectable()
 export class UserService {
@@ -44,7 +43,7 @@ export class UserService {
     if (existing) throw new ConflictException('Email already registered');
 
     const role = await this.resolveRole(dto.role);
-    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const record = await this.prisma.staff.create({
       data: {
@@ -69,6 +68,9 @@ export class UserService {
     const data: any = {};
     if (dto.name !== undefined) data.name = dto.name.trim();
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    if (dto.password !== undefined) {
+      data.password = await bcrypt.hash(dto.password, 10);
+    }
     if (dto.role !== undefined) {
       const role = await this.resolveRole(dto.role);
       data.roleId = role.id;

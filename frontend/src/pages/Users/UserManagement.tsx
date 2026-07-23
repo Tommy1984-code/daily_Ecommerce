@@ -38,6 +38,7 @@ interface EditUserData {
   name: string;
   role: string;
   isActive: boolean;
+  password: string;
 }
 
 export default function UserManagement() {
@@ -48,6 +49,7 @@ export default function UserManagement() {
   const [showModal, setShowModal] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newName, setNewName] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("USER");
 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -77,9 +79,9 @@ export default function UserManagement() {
   }, [isAdmin, navigate]);
 
   async function handleCreateUser() {
-    if (!newEmail || !newName) return;
+    if (!newEmail || !newName || !newPassword) return;
     try {
-      await createUser({ email: newEmail, name: newName, role: newRole });
+      await createUser({ email: newEmail, name: newName, role: newRole, password: newPassword });
       resetModal();
       await fetchUsers();
     } catch (err) {
@@ -91,6 +93,7 @@ export default function UserManagement() {
     setShowModal(false);
     setNewEmail("");
     setNewName("");
+    setNewPassword("");
     setNewRole("USER");
   }
 
@@ -101,6 +104,7 @@ export default function UserManagement() {
       name: user.name,
       role: user.role,
       isActive: user.isActive,
+      password: "",
     });
     setShowEditModal(true);
   }
@@ -108,11 +112,15 @@ export default function UserManagement() {
   async function handleEditSave() {
     if (!editData) return;
     try {
-      await updateUser(editData.id, {
+      const payload: any = {
         name: editData.name,
         role: editData.role,
         isActive: editData.isActive,
-      });
+      };
+      if (editData.password) {
+        payload.password = editData.password;
+      }
+      await updateUser(editData.id, payload);
       setShowEditModal(false);
       setEditData(null);
       await fetchUsers();
@@ -338,6 +346,16 @@ export default function UserManagement() {
           </div>
 
           <div>
+            <Label>Password</Label>
+            <Input
+              type="password"
+              placeholder="Min 6 characters"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+
+          <div>
             <Label>Role</Label>
             <Select
               options={roleOptions}
@@ -395,6 +413,18 @@ export default function UserManagement() {
                   setEditData({ ...editData, role: value })
                 }
                 placeholder="Select role"
+              />
+            </div>
+
+            <div>
+              <Label>New Password (leave blank to keep current)</Label>
+              <Input
+                type="password"
+                placeholder="Min 6 characters"
+                value={editData.password}
+                onChange={(e) =>
+                  setEditData({ ...editData, password: e.target.value })
+                }
               />
             </div>
 

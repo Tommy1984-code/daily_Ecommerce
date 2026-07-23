@@ -12,6 +12,28 @@ enum UserType {
   STAFF
 }
 
+enum OrderStatus {
+  NEW
+  DEFICIENCY
+  PENDING_PAYMENT
+  PREPARED
+  READY
+  PICKED
+  DELIVERED
+  CANCELED
+}
+
+enum DeliveryMethod {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  TELEBIRR
+  CASH
+}
+
 model Customer {
   id        String   @id @default(uuid()) @db.Uuid
   phone     String   @unique() @db.VarChar(20)
@@ -35,10 +57,29 @@ model Staff {
   roleId    String   @map("role_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  shopCode  String?  @map("shop_code") @db.VarChar(50)
 
-  role Role @relation(fields: [roleId], references: [id])
+  role        Role            @relation(fields: [roleId], references: [id])
+  shop        Shop?           @relation(fields: [shopCode], references: [locationCode])
+  verified    Order[]         @relation("verified_orders")
+  canceled    Order[]         @relation("canceled_orders")
+
+  statusChanges OrderStatusHistory[]
 
   @@map("staff")
+}
+
+model Rider {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(100)
+  phone     String   @db.VarChar(20)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders Order[] @relation("rider_orders")
+
+  @@map("riders")
 }
 
 model Role {
@@ -109,14 +150,104 @@ model OtpCode {
 }
 
 model Order {
-  id         String   @id @default(uuid()) @db.Uuid
-  customerId String   @map("customer_id") @db.Uuid
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid()) @db.Uuid
+  orderNo     String   @unique() @map("order_no") @db.VarChar(50)
+  shopCode    String   @map("shop_code") @db.VarChar(50)
+  customerId  String   @map("customer_id") @db.Uuid
+  status      OrderStatus @default(NEW)
+  orderDate   DateTime @default(now()) @map("order_date")
+  deliveryDate String?  @map("delivery_date") @db.VarChar(20)
+  deliveryTimeWindow String? @map("delivery_time_window") @db.VarChar(50)
+  deliveryMethod DeliveryMethod? @map("delivery_method")
+  deliveryLocation String? @map("delivery_location") @db.VarChar(255)
+  paymentMethod PaymentMethod? @map("payment_method")
+  bankName      String?  @map("bank_name") @db.VarChar(100)
+  paymentReferenceNo String? @map("payment_reference_no") @db.VarChar(100)
+  paymentDescription String? @map("payment_description") @db.Text
+  shipToName    String?  @map("ship_to_name") @db.VarChar(100)
+  shipToEmail   String?  @map("ship_to_email") @db.VarChar(100)
+  shipToPhone   String?  @map("ship_to_phone") @db.VarChar(20)
+  shipToCity    String?  @map("ship_to_city") @db.VarChar(100)
+  orderNote     String?  @map("order_note") @db.Text
+  subtotal      Decimal   @default(0) @db.Decimal(12, 2)
+  total         Decimal   @default(0) @db.Decimal(12, 2)
+  deficiencyResponseDeadline DateTime? @map("deficiency_response_deadline")
+  paymentDeadline           DateTime? @map("payment_deadline")
+  verifiedBy   String?  @map("verified_by") @db.Uuid
+  verifiedAt   DateTime? @map("verified_at")
+  riderId      String?  @map("rider_id") @db.Uuid
+  deliveredAt  DateTime? @map("delivered_at")
+  canceledAt   DateTime? @map("canceled_at")
+  canceledBy   String?  @map("canceled_by") @db.Uuid
+  cancellationReason String? @map("cancellation_reason") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  customer Customer @relation(fields: [customerId], references: [id])
+  customer  Customer  @relation(fields: [customerId], references: [id])
+  shop      Shop      @relation(fields: [shopCode], references: [locationCode])
+  verifiedByStaff Staff?  @relation("verified_orders", fields: [verifiedBy], references: [id])
+  canceledByStaff Staff?  @relation("canceled_orders", fields: [canceledBy], references: [id])
+  rider Rider? @relation("rider_orders", fields: [riderId], references: [id])
 
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+  notifications Notification[]
+
+  @@index([orderNo])
+  @@index([shopCode])
+  @@index([customerId])
+  @@index([status])
+  @@index([orderDate])
   @@map("orders")
+}
+
+model OrderItem {
+  id                 String   @id @default(uuid()) @db.Uuid
+  orderId            String   @map("order_id") @db.Uuid
+  itemCode           String   @map("item_code") @db.VarChar(50)
+  itemDescription    String   @map("item_description") @db.VarChar(500)
+  uom                String?  @db.VarChar(20)
+  quantityRequested  Decimal  @map("quantity_requested") @db.Decimal(12, 3)
+  quantityAvailable  Decimal? @map("quantity_available") @db.Decimal(12, 3)
+  unitPrice          Decimal  @map("unit_price") @db.Decimal(12, 2)
+  totalPrice         Decimal  @map("total_price") @db.Decimal(12, 2)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id         String   @id @default(uuid()) @db.Uuid
+  orderId    String   @map("order_id") @db.Uuid
+  fromStatus OrderStatus @map("from_status")
+  toStatus   OrderStatus @map("to_status")
+  changedBy  String?  @map("changed_by") @db.Uuid
+  reason     String?  @db.Text
+  changedAt  DateTime @default(now()) @map("changed_at")
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  changedByStaff Staff? @relation(fields: [changedBy], references: [id])
+
+  @@index([orderId])
+  @@index([changedAt])
+  @@map("order_status_history")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @map("order_id") @db.Uuid
+  type      String   @db.VarChar(50)
+  channel   String   @db.VarChar(20)
+  message   String   @db.Text
+  sentAt    DateTime? @map("sent_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("notifications")
 }
 
 // ============================================================
@@ -310,10 +441,14 @@ model Shop {
   locationCode String  @id @map("location_code") @db.VarChar(50)
   titleEn      String  @map("title_en") @db.VarChar(200)
   titleAm      String  @map("title_am") @db.VarChar(200)
+  address      String? @db.VarChar(500)
+  phone        String? @db.VarChar(20)
   latitude     Decimal? @db.Decimal(10, 7)
   longitude    Decimal? @db.Decimal(10, 7)
   createdAt    DateTime @default(now()) @map("created_at")
 
+  staff         Staff[]
+  orders        Order[]
   landMarkPrices LandMarkPrice[]
 
   @@map("shops")
